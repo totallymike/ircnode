@@ -51,7 +51,7 @@ irc.socket.on('data', function(data) {
 });
 
 irc.emitter.on('PING', function(data) {
-  irc.socket.write('PONG ' + data.splice(data.indexOf(':')) + '\r\n');
+  irc.socket.write('PONG ' + data.slice(data.indexOf(':')) + '\r\n');
 });
 
 irc.emitter.on('PRIVMSG', function(data) {
