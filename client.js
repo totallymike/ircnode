@@ -10,9 +10,10 @@ var realName  = "tm bot";
 var irc = {};
 
 irc.command_char = '!';
+irc.debug = false;
 irc.emitter = new events.EventEmitter();
 
-irc.splitcmd = function(data) {
+irc.splitcmd = function (data) {
   var action = {};
   var params = data.split(' ');
 
@@ -29,17 +30,21 @@ irc.splitcmd = function(data) {
   action.params = params.slice(4);
 
   return action;
-}
+};
 
-irc.socket = net.connect(port, address, function() {
+irc.socket = net.connect(port, address, function () {
   irc.socket.write('NICK ' + myNick + '\r\n');
   irc.socket.write('USER ' + myUser + ' 8 * :' + realName + '\r\n');
   irc.socket.write('JOIN #tm_test\r\n');
 });
 
-irc.socket.on('data', function(data) {
+irc.socket.on('data', function (data) {
   data = data.toString();
-  console.log(data);
+
+  if (irc.debug) {
+    console.log(data);
+  }
+
   var params = data.split(' ');
   if (data[0] === ':') {
     // Chop off initial colon, send to emitter.
@@ -50,20 +55,21 @@ irc.socket.on('data', function(data) {
   }
 });
 
-irc.emitter.on('PING', function(data) {
+irc.emitter.on('PING', function (data) {
   irc.socket.write('PONG ' + data.slice(data.indexOf(':')) + '\r\n');
 });
 
-irc.emitter.on('PRIVMSG', function(data) {
-  console.log('PRIVMSG: ' + data);
-  if (data[ data.indexOf(':') + 1 ] === irc.command_char) {
+irc.emitter.on('PRIVMSG', function (data) {
+
+  // Look for first character of the message.
+  if (data[data.indexOf(':') + 1] === irc.command_char) {
     var action = irc.splitcmd(data);
     console.log(action);
     irc.emitter.emit(action.cmd, action);
   }
 });
 
-irc.emitter.on('m', function(act) {
+irc.emitter.on('m', function (act) {
   if (act.params.length === 0) {
     irc.socket.write('PRIVMSG ' + act.channel + ' :boobs\r\n');
   } else {
