@@ -29,6 +29,7 @@ irc.splitcmd = function (data) {
 
   action.cmd = params[3];
   action.params = params.slice(4);
+  action.data   = data;
 
   return action;
 };
