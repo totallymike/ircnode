@@ -1,5 +1,6 @@
-var net = require('net');
-var events = require('events');
+var fs      = require('fs');
+var net     = require('net');
+var events  = require('events');
 
 var address   = 'irc.linuxfromscratch.org';
 var port      = 6667;
@@ -69,10 +70,10 @@ irc.emitter.on('PRIVMSG', function (data) {
   }
 });
 
-irc.emitter.on('m', function (act) {
-  if (act.params.length === 0) {
-    irc.socket.write('PRIVMSG ' + act.channel + ' :boobs\r\n');
-  } else {
-    irc.socket.write('PRIVMSG ' + act.channel + ' :' + act.params.join(' ') + '\r\n');
+global.irc = irc;
+irc.plugins = [];
+fs.readdir('plugins', function(err, files) {
+  for (var i = 0, len = files.length; i < len; i += 1) {
+    irc.plugins.push(require('./plugins/' + files[i]));
   }
 });
