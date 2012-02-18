@@ -15,6 +15,10 @@ irc.command_char = '!';
 irc.debug = false;
 irc.emitter = new events.EventEmitter();
 
+irc.privmsg  = function (chan, msg) {
+  irc._socket.write('PRIVMSG ' + chan + ' :' + msg + '\r\n');
+};
+
 irc.splitcmd = function (data) {
   var action = {};
   var params = data.split(' ');
@@ -35,13 +39,13 @@ irc.splitcmd = function (data) {
   return action;
 };
 
-irc.socket = net.connect(port, address, function () {
-  irc.socket.write('NICK ' + myNick + '\r\n');
-  irc.socket.write('USER ' + myUser + ' 8 * :' + realName + '\r\n');
-  irc.socket.write('JOIN #tm_test\r\n');
+irc._socket = net.connect(port, address, function () {
+  irc._socket.write('NICK ' + myNick + '\r\n');
+  irc._socket.write('USER ' + myUser + ' 8 * :' + realName + '\r\n');
+  irc._socket.write('JOIN #tm_test\r\n');
 });
 
-irc.socket.on('data', function (data) {
+irc._socket.on('data', function (data) {
   data = data.toString();
 
   if (irc.debug) {
@@ -59,7 +63,7 @@ irc.socket.on('data', function (data) {
 });
 
 irc.emitter.on('PING', function (data) {
-  irc.socket.write('PONG ' + data.slice(data.indexOf(':')) + '\r\n');
+  irc._socket.write('PONG ' + data.slice(data.indexOf(':')) + '\r\n');
 });
 
 irc.emitter.on('PRIVMSG', function (data) {
