@@ -1,15 +1,22 @@
-
 var fs      = require('fs');
 var net     = require('net');
 var events  = require('events');
 
+/* 
 var address   = 'irc.linuxfromscratch.org';
 var port      = 6667;
 var myNick      = 'tm_bot';
 var myUser      = 'tm_bot';
 var realName  = "tm bot";
+*/
 
 var irc = {};
+
+var config_path = (process.env.IRC_NODE_PATH ||
+                   process.env.HOME + '/.ircnode') +
+                   '/config';
+
+irc.config = JSON.parse(fs.readFileSync(config_path));
 
 irc.command_char = '!';
 irc.debug = false;
@@ -39,10 +46,11 @@ irc.splitcmd = function (data) {
   return action;
 };
 
-irc._socket = net.connect(port, address, function () {
-  irc._socket.write('NICK ' + myNick + '\r\n');
-  irc._socket.write('USER ' + myUser + ' 8 * :' + realName + '\r\n');
-  irc._socket.write('JOIN #tm_test\r\n');
+irc._socket = net.connect(irc.config.port, irc.config.address, function () {
+  irc._socket.write('NICK ' + irc.config.nick + '\r\n');
+  irc._socket.write('USER ' + irc.config.user + ' 8 * :'
+                    + irc.config.realName + '\r\n');
+  irc._socket.write('JOIN ' + irc.config.chan + '\r\n');
 });
 
 irc._socket.on('data', function (data) {
