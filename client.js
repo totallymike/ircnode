@@ -13,14 +13,20 @@ var realName  = "tm bot";
 var irc = {};
 
 var config_path = (process.env.IRC_NODE_PATH ||
-                   process.env.HOME + '/.ircnode') +
-                   '/config';
+                   process.env.HOME + '/.ircnode');
+var config_file = config_path + '/config';
+var plugin_dir  = config_path + '/plugins/';
 
-irc.config = JSON.parse(fs.readFileSync(config_path));
+irc.config = JSON.parse(fs.readFileSync(config_file));
 
 irc.command_char = '!';
 irc.debug = false;
 irc.emitter = new events.EventEmitter();
+
+irc.is_admin = function(nick) {
+  // Stub function.
+  return true;
+}
 
 irc.privmsg  = function (chan, msg) {
   irc._socket.write('PRIVMSG ' + chan + ' :' + msg + '\r\n');
@@ -79,15 +85,43 @@ irc.emitter.on('PRIVMSG', function (data) {
   // Look for first character of the message.
   if (data[data.indexOf(':') + 1] === irc.command_char) {
     var action = irc.splitcmd(data);
-    console.log(action);
+    if (irc.debug) console.log(action);
     irc.emitter.emit(action.cmd, action);
   }
 });
 
 global.irc = irc;
 irc.plugins = [];
-fs.readdir('plugins', function(err, files) {
+fs.readdir(plugin_dir, function(err, files) {
   for (var i = 0, len = files.length; i < len; i += 1) {
-    irc.plugins.push(require('./plugins/' + files[i]));
+    var plugin = require(plugin_dir + files[i]);
+    plugin.enabled = true;
+    irc.plugins.push(plugin);
+    irc.emitter.on(plugin.name, plugin.handler);
   }
+});
+
+irc.emitter.on('disable', function(act) {
+  if (irc.is_admin(act.nick)) {
+    for (var p in irc.plugins) {
+      if (irc.plugins[p].name === act.params[0]) {
+        irc.plugins[p].enabled = false;
+        irc.emitter.removeListener(irc.plugins[p].name, irc.plugins[p].handler);
+      }
+    }
+  }
+  irc.privmsg(act.channel, act.params[0] + ' disabled');
+});
+
+irc.emitter.on('enable', function(act) {
+  if (irc.is_admin(act.nick)) {
+    for (var p in irc.plugins) {
+      if (irc.plugins[p].name === act.params[0] &&
+          irc.plugins[p].enabled === false) {
+        irc.plugins[p].enabled = true;
+        irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
+      }
+    }
+  }
+  irc.privmsg(act.channel, act.params[0] + 'enabled');
 });
