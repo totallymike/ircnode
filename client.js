@@ -2,24 +2,19 @@ var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
 
-/* 
-var address   = 'irc.linuxfromscratch.org';
-var port      = 6667;
-var myNick      = 'tm_bot';
-var myUser      = 'tm_bot';
-var realName  = "tm bot";
-*/
-
 var irc = {};
 
 var config_path = (process.env.IRC_NODE_PATH ||
                    process.env.HOME + '/.ircnode');
 var config_file = config_path + '/config';
+var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 
 irc.config = JSON.parse(fs.readFileSync(config_file));
 
-irc.users = {};
+fs.readFile(user_file, function(err, data) {
+  irc.users = JSON.parse(data);
+});
 
 irc.command_char = '!';
 irc.debug = false;
