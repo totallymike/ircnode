@@ -1,6 +1,6 @@
-var fs      = require('fs');
-var net     = require('net');
-var events  = require('events');
+var fs        = require('fs');
+var net       = require('net');
+var events    = require('events');
 
 /* 
 var address   = 'irc.linuxfromscratch.org';
