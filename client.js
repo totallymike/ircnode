@@ -180,7 +180,7 @@ irc.emitter.on('enable', function(act) {
           irc.plugins[p].enabled === false) {
         irc.plugins[p].enabled = true;
         irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
-        irc.privmsg(act.channel, act.params[0] + 'enabled');
+        irc.privmsg(act.channel, act.params[0] + ' enabled');
       }
     }
   } else {
