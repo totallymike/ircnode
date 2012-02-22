@@ -1,6 +1,7 @@
 var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
+var path      = require('path');
 
 var irc = {};
 
@@ -10,14 +11,22 @@ var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 
+fs.mkdirSync(config_path, 0755);
+fs.mkdirSync(plugin_dir, 0755);
+
+var exists = path.existsSync(config_file);
+if(!exists) {
+  fs.openSync(config_file, 'w+');
+  fs.writeFileSync(config_file, fs.readFileSync('./config.sample'));
+}
 irc.config = JSON.parse(fs.readFileSync(config_file));
 
-fs.readFile(user_file, function(err, data) {
-  if (err) {
-    console.log("users.json file must exist!");
-    throw err
+path.exists(user_file, function (exists) {
+  if(!exists) {
+    fs.openSync(user_file, 'w+');
+    fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
   }
-  irc.users = JSON.parse(data);
+  irc.users = JSON.parse(fs.readFileSync(user_file));
 });
 
 irc.command_char = '!';
