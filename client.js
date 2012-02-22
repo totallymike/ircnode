@@ -19,6 +19,8 @@ var plugin_dir  = config_path + '/plugins/';
 
 irc.config = JSON.parse(fs.readFileSync(config_file));
 
+irc.users = {};
+
 irc.command_char = '!';
 irc.debug = false;
 irc.emitter = new events.EventEmitter();
@@ -53,10 +55,12 @@ irc.splitcmd = function (data) {
 };
 
 irc._socket = net.connect(irc.config.port, irc.config.address, function () {
-  irc._socket.write('NICK ' + irc.config.nick + '\r\n');
-  irc._socket.write('USER ' + irc.config.user + ' 8 * :'
-                    + irc.config.realName + '\r\n');
-  irc._socket.write('JOIN ' + irc.config.chan + '\r\n');
+  irc._socket.write('NICK ' + irc.config.nick + '\r\n', function() {
+    irc._socket.write('USER ' + irc.config.user + ' 8 * :'
+                      + irc.config.realName + '\r\n', function() {
+      irc._socket.write('JOIN ' + irc.config.chan + '\r\n');
+    });
+  });
 });
 
 irc._socket.on('data', function (data) {
@@ -124,4 +128,20 @@ irc.emitter.on('enable', function(act) {
     }
   }
   irc.privmsg(act.channel, act.params[0] + 'enabled');
+});
+
+irc.emitter.on('PRIVMSG', function(data) {
+  var nick = data.slice(0,data.indexOf('!'));
+  if (typeof irc.users[nick] === 'undefined') {
+    irc.users[nick] = {};
+  }
+  irc.users[nick].seen_time = new Date().toUTCString();
+  irc.users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
+  irc.users[nick].seen_channel = data.split(' ')[2];
+});
+
+irc.emitter.on('seen', function(act) {
+  var nick = act.params[0] ? act.params : act.nick;
+  irc.privmsg(act.channel, nick + ' last seen: ' + irc.users[nick].seen_time +
+              " saying '" + irc.users[nick].seen_msg + "' in " + irc.users[nick].seen_channel);
 });
