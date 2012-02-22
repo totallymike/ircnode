@@ -47,10 +47,12 @@ irc.splitcmd = function (data) {
 };
 
 irc._socket = net.connect(irc.config.port, irc.config.address, function () {
-  irc._socket.write('NICK ' + irc.config.nick + '\r\n');
-  irc._socket.write('USER ' + irc.config.user + ' 8 * :'
-                    + irc.config.realName + '\r\n');
-  irc._socket.write('JOIN ' + irc.config.chan + '\r\n');
+  irc._socket.write('NICK ' + irc.config.nick + '\r\n', function() {
+    irc._socket.write('USER ' + irc.config.user + ' 8 * :'
+                      + irc.config.realName + '\r\n', function() {
+      irc._socket.write('JOIN ' + irc.config.chan + '\r\n');
+    });
+  });
 });
 
 irc._socket.on('data', function (data) {
