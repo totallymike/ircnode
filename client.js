@@ -11,8 +11,14 @@ var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 
-fs.mkdirSync(config_path, 0755);
-fs.mkdirSync(plugin_dir, 0755);
+var exists = path.existsSync(config_path);
+if (!exists) {
+  fs.mkdirSync(config_path, 0755);
+}
+var exists = path.existsSync(plugin_dir);
+if (!exists) {
+  fs.mkdirSync(plugin_dir, 0755);
+}
 
 var exists = path.existsSync(config_file);
 if(!exists) {
