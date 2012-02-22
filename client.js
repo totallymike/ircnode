@@ -18,6 +18,8 @@ var config_path = (process.env.IRC_NODE_PATH ||
 
 irc.config = JSON.parse(fs.readFileSync(config_path));
 
+irc.users = {};
+
 irc.command_char = '!';
 irc.debug = false;
 irc.emitter = new events.EventEmitter();
@@ -92,4 +94,20 @@ fs.readdir('plugins', function(err, files) {
   for (var i = 0, len = files.length; i < len; i += 1) {
     irc.plugins.push(require('./plugins/' + files[i]));
   }
+});
+
+irc.emitter.on('PRIVMSG', function(data) {
+  var nick = data.slice(0,data.indexOf('!'));
+  if (typeof irc.users[nick] === 'undefined') {
+    irc.users[nick] = {};
+  }
+  irc.users[nick].seen_time = new Date().toUTCString();
+  irc.users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
+  irc.users[nick].seen_channel = data.split(' ')[2];
+});
+
+irc.emitter.on('seen', function(act) {
+  var nick = act.params[0] ? act.params : act.nick;
+  irc.privmsg(act.channel, nick + ' last seen: ' + irc.users[nick].seen_time +
+              " saying '" + irc.users[nick].seen_msg + "' in " + irc.users[nick].seen_channel);
 });
