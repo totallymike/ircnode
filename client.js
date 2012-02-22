@@ -16,6 +16,7 @@ fs.mkdirSync(plugin_dir, 0755);
 
 var exists = path.existsSync(config_file);
 if(!exists) {
+  console.log('Creating a new config file');
   fs.openSync(config_file, 'w+');
   fs.writeFileSync(config_file, fs.readFileSync('./config.sample'));
 }
@@ -23,6 +24,7 @@ irc.config = JSON.parse(fs.readFileSync(config_file));
 
 path.exists(user_file, function (exists) {
   if(!exists) {
+    console.log('Creating a new users.json file');
     fs.openSync(user_file, 'w+');
     fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
   }
