@@ -26,8 +26,10 @@ irc.debug = false;
 irc.emitter = new events.EventEmitter();
 
 irc.is_admin = function(nick) {
-  // Stub function.
-  return true;
+  if (typeof irc.users[nick] === 'undefined')
+    return false;
+  
+  return (irc.users[nick].auth === 'admin');
 }
 
 irc.privmsg  = function (chan, msg) {
@@ -54,11 +56,55 @@ irc.splitcmd = function (data) {
   return action;
 };
 
+irc.act = function(options, callback) {
+  if (irc.debug) console.log(options);
+  var string = options.action + ' ';
+  if (typeof options.params !== 'undefined') {
+    string += options.params.join(' ');
+  }
+  if (typeof options.longParam !== 'undefined') {
+    string += ' :' + options.longParam;
+  }
+  if (typeof callback !== 'function') {
+    callback = null;
+  }
+  if (irc.debug) console.log(string);
+  irc._socket.write(string + '\r\n', callback);
+};
+
+irc.nick = function (nick, callback) {
+  irc.act({action: 'NICK', params: [nick]}, callback);
+};
+
+var getNewAdmin = function(act) {
+  if (typeof irc.users[act.nick] === 'undefined') {
+    irc.users[act.nick] = {};
+  }
+  irc.users[act.nick].auth = 'admin';
+  irc.act({action: 'PART', params: ['#bot_needs_admin']});
+  irc.emitter.removeListener('hello', getNewAdmin);
+  irc.act({action: 'JOIN', params: [irc.config.chan]});
+}
+
 irc._socket = net.connect(irc.config.port, irc.config.address, function () {
-  irc._socket.write('NICK ' + irc.config.nick + '\r\n', function() {
-    irc._socket.write('USER ' + irc.config.user + ' 8 * :'
-                      + irc.config.realName + '\r\n', function() {
-      irc._socket.write('JOIN ' + irc.config.chan + '\r\n');
+  var nick = irc.config.nick;
+  var user = irc.config.user;
+  var realName = irc.config.realName;
+  irc.nick(nick, function() {
+    irc.act({action: 'USER ',
+             params: [user, 8,  '*'],
+             longParam: realName}, function() {
+      var has_admin = false;
+      for (var u in irc.users) {
+        if (irc.users[u].auth === 'admin') {
+          has_admin = true;
+        }
+      }
+      if (!has_admin) {
+        irc.act({action: 'JOIN', params: ['#bot_needs_admin']}, function() {
+          irc.emitter.on('hello', getNewAdmin);
+        });
+      }
     });
   });
 });
@@ -106,28 +152,32 @@ fs.readdir(plugin_dir, function(err, files) {
 });
 
 irc.emitter.on('disable', function(act) {
-  if (irc.is_admin(act.nick)) {
+  if (irc.is_admin(act.nick) === true) {
     for (var p in irc.plugins) {
       if (irc.plugins[p].name === act.params[0]) {
         irc.plugins[p].enabled = false;
         irc.emitter.removeListener(irc.plugins[p].name, irc.plugins[p].handler);
+        irc.privmsg(act.channel, act.params[0] + ' disabled');
       }
     }
+  } else {
+    irc.privmsg(act.channel, 'ERROR: not authorized');
   }
-  irc.privmsg(act.channel, act.params[0] + ' disabled');
 });
 
 irc.emitter.on('enable', function(act) {
-  if (irc.is_admin(act.nick)) {
+  if (irc.is_admin(act.nick) === true) {
     for (var p in irc.plugins) {
       if (irc.plugins[p].name === act.params[0] &&
           irc.plugins[p].enabled === false) {
         irc.plugins[p].enabled = true;
         irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
+        irc.privmsg(act.channel, act.params[0] + 'enabled');
       }
     }
+  } else {
+    irc.privmsg(act.channel, 'ERROR: not authorized');
   }
-  irc.privmsg(act.channel, act.params[0] + 'enabled');
 });
 
 irc.emitter.on('PRIVMSG', function(data) {
@@ -143,5 +193,6 @@ irc.emitter.on('PRIVMSG', function(data) {
 irc.emitter.on('seen', function(act) {
   var nick = act.params[0] ? act.params : act.nick;
   irc.privmsg(act.channel, nick + ' last seen: ' + irc.users[nick].seen_time +
-              " saying '" + irc.users[nick].seen_msg + "' in " + irc.users[nick].seen_channel);
+              " saying '" + irc.users[nick].seen_msg + "' in " +
+              irc.users[nick].seen_channel);
 });
