@@ -1,7 +1,7 @@
 var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
-var path      = require('path');
+//var path      = require('path');
 
 var irc = {};
 
@@ -11,25 +11,25 @@ var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 
-var exists = path.existsSync(config_path);
+var exists = fs.existsSync(config_path);
 if (!exists) {
-  fs.mkdirSync(config_path, 0755);
+  fs.mkdirSync(config_path, '0755');
 }
-var exists = path.existsSync(plugin_dir);
+var exists = fs.existsSync(plugin_dir);
 if (!exists) {
-  fs.mkdirSync(plugin_dir, 0755);
+  fs.mkdirSync(plugin_dir, '0755');
 }
 
-var exists = path.existsSync(config_file);
-if(!exists) {
+var exists = fs.existsSync(config_file);
+if (!exists) {
   console.log('Creating a new config file');
   fs.openSync(config_file, 'w+');
   fs.writeFileSync(config_file, fs.readFileSync('./config.sample'));
 }
 irc.config = JSON.parse(fs.readFileSync(config_file));
 
-path.exists(user_file, function (exists) {
-  if(!exists) {
+fs.exists(user_file, function (exists) {
+  if (!exists) {
     console.log('Creating a new users.json file');
     fs.openSync(user_file, 'w+');
     fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
@@ -41,16 +41,17 @@ irc.command_char = '!';
 irc.debug = true;
 irc.emitter = new events.EventEmitter();
 
-irc.is_admin = function(nick) {
+irc.is_admin = function (nick) {
   if (typeof irc.users[nick] === 'undefined')
     return false;
   
   return (irc.users[nick].auth === 'admin' || irc.users[nick].auth === 'owner');
-}
+};
 
-irc.is_owner = function(nick) {
-  if (typeof irc.users[nick] === 'undefined')
+irc.is_owner = function (nick) {
+  if (typeof irc.users[nick] === 'undefined') {
     return false;
+  }
 
   return (irc.users[nick].auth === 'owner');
 };
@@ -79,7 +80,7 @@ irc.splitcmd = function (data) {
   return action;
 };
 
-irc.act = function(options, callback) {
+irc.act = function (options, callback) {
   if (irc.debug) console.log(options);
   var string = options.action + ' ';
   if (typeof options.params !== 'undefined') {
@@ -94,7 +95,7 @@ irc.act = function(options, callback) {
 
 irc.join = function (channel, callback) {
   irc.act({action: 'JOIN', params: [channel]}, callback);
-}
+};
 
 irc.nick = function (nick, callback) {
   irc.act({action: 'NICK', params: [nick]}, callback);
@@ -111,8 +112,8 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
   var realName  = irc.config.realName;
   var chan      = irc.config.chan;
 
-  irc.nick(nick, function() {
-    irc.user(user, '8', realName, function() {
+  irc.nick(nick, function () {
+    irc.user(user, '8', realName, function () {
       var has_admin = false;
       for (var u in irc.users) {
         if (irc.is_admin(u)) {
@@ -167,7 +168,7 @@ irc.emitter.on('PRIVMSG', function (data) {
 
 global.irc = irc;
 irc.plugins = [];
-fs.readdir(plugin_dir, function(err, files) {
+fs.readdir(plugin_dir, function (err, files) {
   for (var i = 0, len = files.length; i < len; i += 1) {
     var plugin = require(plugin_dir + files[i]);
     plugin.enabled = true;
@@ -176,7 +177,7 @@ fs.readdir(plugin_dir, function(err, files) {
   }
 });
 
-irc.emitter.on('disable', function(act) {
+irc.emitter.on('disable', function (act) {
   if (irc.is_admin(act.nick) === true) {
     for (var p in irc.plugins) {
       if (irc.plugins[p].name === act.params[0]) {
@@ -190,7 +191,7 @@ irc.emitter.on('disable', function(act) {
   }
 });
 
-irc.emitter.on('enable', function(act) {
+irc.emitter.on('enable', function (act) {
   if (irc.is_admin(act.nick) === true) {
     for (var p in irc.plugins) {
       if (irc.plugins[p].name === act.params[0] &&
@@ -206,18 +207,20 @@ irc.emitter.on('enable', function(act) {
 });
 
 irc.emitter.on('set_auth', function (act) {
-  if (typeof user === 'undefined')
+  var nick  = act.params[0];
+  var level = act.params[1];
+
+  if (typeof irc.users[nick] === 'undefined')
     irc.users[nick] = {};
 
   var user  = irc.users[nick];
-  var nick  = act.params[0];
-  var level = act.params[1];
+
   if (act.params.length < 2) {
     irc.privmsg(act.channel, 'ERROR: Insufficient parameters');
     return (1);
   }
   if (level !== 'user' && level !== 'owner' && level !== 'admin') {
-    irc.privmsg(act.channel, 'ERROR: Invalid parameter: ' + level)
+    irc.privmsg(act.channel, 'ERROR: Invalid parameter: ' + level);
     return (1);
   }
   if (irc.is_owner(act.nick)) {
@@ -232,8 +235,8 @@ irc.emitter.on('set_auth', function (act) {
   }
 });
 
-irc.emitter.on('PRIVMSG', function(data) {
-  var nick = data.slice(0,data.indexOf('!'));
+irc.emitter.on('PRIVMSG', function (data) {
+  var nick = data.slice(0, data.indexOf('!'));
   if (typeof irc.users[nick] === 'undefined') {
     irc.users[nick] = {};
   }
@@ -242,7 +245,7 @@ irc.emitter.on('PRIVMSG', function(data) {
   irc.users[nick].seen_channel = data.split(' ')[2];
 });
 
-irc.emitter.on('seen', function(act) {
+irc.emitter.on('seen', function (act) {
   var nick = act.params[0] ? act.params : act.nick;
   irc.privmsg(act.channel, nick + ' last seen: ' + irc.users[nick].seen_time +
               " saying '" + irc.users[nick].seen_msg + "' in " +
