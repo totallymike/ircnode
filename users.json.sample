@@ -1,5 +1,3 @@
 {
-  "totallymike": {
-    "auth": "owner"
-  }
+  "ircnode_test": { "auth": "owner" }
 }
