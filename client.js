@@ -1,7 +1,7 @@
 var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
-//var path      = require('path');
+var path      = require('path');
 
 var irc = {};
 
@@ -11,31 +11,40 @@ var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 
-var exists = fs.existsSync(config_path);
+var exists = path.existsSync(config_path);
 if (!exists) {
   fs.mkdirSync(config_path, '0755');
 }
-var exists = fs.existsSync(plugin_dir);
+var exists = path.existsSync(plugin_dir);
 if (!exists) {
   fs.mkdirSync(plugin_dir, '0755');
 }
 
-var exists = fs.existsSync(config_file);
+var review_required = false;
+var exists = path.existsSync(config_file);
 if (!exists) {
   console.log('Creating a new config file');
   fs.openSync(config_file, 'w+');
   fs.writeFileSync(config_file, fs.readFileSync('./config.sample'));
+  review_required = true;
 }
 irc.config = JSON.parse(fs.readFileSync(config_file));
 
-fs.exists(user_file, function (exists) {
+path.exists(user_file, function (exists) {
   if (!exists) {
     console.log('Creating a new users.json file');
     fs.openSync(user_file, 'w+');
     fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
+    review_required = true;
   }
   irc.users = JSON.parse(fs.readFileSync(user_file));
 });
+
+if (review_required) {
+  console.log('  Please review the configuration files in ' + config_path);
+  console.log('  Documentation is coming soon');
+  return 1;
+}
 
 irc.command_char = '!';
 irc.debug = true;
