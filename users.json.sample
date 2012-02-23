@@ -1,3 +1,5 @@
 {
-  "ircnode_test": { "auth": "owner" }
+  "ircnode_test": {
+    "auth": "owner"
+  }
 }
