@@ -21,7 +21,7 @@ fs.readFile(user_file, function(err, data) {
 });
 
 irc.command_char = '!';
-irc.debug = true;
+irc.debug = process.env.IRC_NODE_DEBUG === 'true';
 irc.emitter = new events.EventEmitter();
 
 irc.is_admin = function(nick) {
