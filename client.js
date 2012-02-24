@@ -14,10 +14,7 @@ var plugin_dir  = config_path + '/plugins/';
 var exists = path.existsSync(config_path);
 if (!exists) {
   fs.mkdirSync(config_path, '0755');
-}
-var exists = path.existsSync(plugin_dir);
-if (!exists) {
-  fs.mkdirSync(plugin_dir, '0755');
+  fs.mkdir(plugin_dir, '0755');
 }
 
 var review_required = false;
