@@ -48,9 +48,8 @@ irc.is_admin = function (nick) {
 };
 
 irc.is_owner = function (nick) {
-  if (typeof irc.users[nick] === 'undefined') {
+  if (typeof irc.users[nick] === 'undefined')
     return false;
-  }
 
   return (irc.users[nick].auth === 'owner');
 };
