@@ -18,26 +18,23 @@ if (!exists) {
 }
 
 var review_required = false;
-var exists = path.existsSync(config_file);
-if (!exists) {
-  console.log('Creating a new config file');
-  fs.openSync(config_file, 'w+');
-  fs.writeFileSync(config_file, fs.readFileSync('./config.sample'));
-  review_required = true;
-
-  exists = path.existsSync(user_file)
+[config_file, user_file].forEach(function (file) {
+  var exists = path.existsSync(file);
   if (!exists) {
-      console.log('Creating a new users.json file');
-      fs.openSync(user_file, 'w+');
-      fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
-      review_required = true;
+    var sample_file = './' + path.basename(file) + '.sample';
+    fs.openSync(file, 'w+');
+    fs.writeFileSync(file, sample_file);
+    console.log('Creating a new ' + file + ' + file.');
+    review_required = true;
   }
-  irc.users = JSON.parse(fs.readFileSync(user_file));
-
-  console.log('  Please review the configuration files in ' + config_path);
+});
+if (review_required) {
+  console.log('Please review the configuration files in ' + config_path);
   process.exit();
 }
-irc.config = JSON.parse(fs.readFileSync(config_file));
+
+irc.config  = JSON.parse(fs.readFileSync(config_file));
+irc.users   = JSON.parse(fs.readFileSync(user_file));
 
 irc.command_char = '!';
 irc.debug = true;
