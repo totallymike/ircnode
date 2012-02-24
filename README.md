@@ -1,5 +1,5 @@
 IRC Node  
-Open-source, extendable IRC chat bot.  
+Extensible, open-source IRC bot written with node.js  
 Copyright (c) 2012 Michael Westbom   
 See LICENSE for details.  
 
