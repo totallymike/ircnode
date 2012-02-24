@@ -208,11 +208,10 @@ irc.emitter.on('enable', function (act) {
 irc.emitter.on('set_auth', function (act) {
   var nick  = act.params[0];
   var level = act.params[1];
-
-  if (typeof irc.users[nick] === 'undefined')
-    irc.users[nick] = {};
-
   var user  = irc.users[nick];
+
+  if (typeof user === 'undefined')
+    irc.users[nick] = {};
 
   if (act.params.length < 2) {
     irc.privmsg(act.channel, 'ERROR: Insufficient parameters');
