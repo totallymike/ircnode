@@ -8,7 +8,7 @@
 
 var irc = global.irc;
 
-var test_handler = function (act) {
+var test_handler = function(act) {
   if (act.params.length === 0) {
     irc.privmsg(act.channel, 'test');
   } else {
