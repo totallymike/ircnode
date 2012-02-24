@@ -1,6 +1,7 @@
 var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
+var path      = require('path');
 
 var irc = {};
 
@@ -10,15 +11,30 @@ var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 
-irc.config = JSON.parse(fs.readFileSync(config_file));
+var exists = path.existsSync(config_path);
+if (!exists) {
+  fs.mkdirSync(config_path, '0755');
+  fs.mkdir(plugin_dir, '0755');
+}
 
-fs.readFile(user_file, function (err, data) {
-  if (err) {
-    console.log("users.json file must exist!");
-    throw err;
+var review_required = false;
+[config_file, user_file].forEach(function (file) {
+  var exists = path.existsSync(file);
+  if (!exists) {
+    var sample_file = './' + path.basename(file) + '.sample';
+    fs.openSync(file, 'w+');
+    fs.writeFileSync(file, sample_file);
+    console.log('Creating a new ' + file + ' + file.');
+    review_required = true;
   }
-  irc.users = JSON.parse(data);
 });
+if (review_required) {
+  console.log('Please review the configuration files in ' + config_path);
+  process.exit();
+}
+
+irc.config  = JSON.parse(fs.readFileSync(config_file));
+irc.users   = JSON.parse(fs.readFileSync(user_file));
 
 irc.command_char = '!';
 irc.debug = process.env.IRC_NODE_DEBUG === 'true';
