@@ -227,6 +227,12 @@ irc.emitter.on('PRIVMSG', function(data) {
 
 irc.emitter.on('seen', function(act) {
   var nick = act.params[0] ? act.params : act.nick;
+  if (typeof irc.users[nick] === 'undefined' ||
+      typeof irc.users[nick].seen_msg === 'undefined' ||
+      typeof irc.users[nick].seen_time === 'undefined') {
+    irc.privmsg(act.channel, 'Unknown nick: ' + nick);
+    return (1);
+  }
   irc.privmsg(act.channel, nick + ' last seen: ' + irc.users[nick].seen_time +
               " saying '" + irc.users[nick].seen_msg + "' in " +
               irc.users[nick].seen_channel);
