@@ -1,8 +1,8 @@
 {
   "port":     6667,
   "address":  "irc.freenode.net",
-  "nick":     "ircnode_test",
-  "user":     "ircnode_test",
+  "nick":     "ircnode_bot",
+  "user":     "ircnode_bot",
   "chan":     "#bots",
   "realName": "Ircnode Bot"
 }
