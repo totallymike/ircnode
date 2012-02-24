@@ -15,7 +15,7 @@ irc.config = JSON.parse(fs.readFileSync(config_file));
 fs.readFile(user_file, function(err, data) {
   if (err) {
     console.log("users.json file must exist!");
-    throw err
+    throw err;
   }
   irc.users = JSON.parse(data);
 });
@@ -29,7 +29,7 @@ irc.is_admin = function(nick) {
     return false;
   
   return (irc.users[nick].auth === 'admin' || irc.users[nick].auth === 'owner');
-}
+};
 
 irc.is_owner = function(nick) {
   if (typeof irc.users[nick] === 'undefined')
@@ -77,7 +77,7 @@ irc.act = function(options, callback) {
 
 irc.join = function (channel, callback) {
   irc.act({action: 'JOIN', params: [channel]}, callback);
-}
+};
 
 irc.nick = function (nick, callback) {
   irc.act({action: 'NICK', params: [nick]}, callback);
@@ -200,7 +200,7 @@ irc.emitter.on('set_auth', function (act) {
     return (1);
   }
   if (level !== 'user' && level !== 'owner' && level !== 'admin') {
-    irc.privmsg(act.channel, 'ERROR: Invalid parameter: ' + level)
+    irc.privmsg(act.channel, 'ERROR: Invalid parameter: ' + level);
     return (1);
   }
   if (irc.is_owner(act.nick)) {
