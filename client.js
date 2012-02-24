@@ -14,10 +14,7 @@ var plugin_dir  = config_path + '/plugins/';
 var exists = path.existsSync(config_path);
 if (!exists) {
   fs.mkdirSync(config_path, '0755');
-}
-var exists = path.existsSync(plugin_dir);
-if (!exists) {
-  fs.mkdirSync(plugin_dir, '0755');
+  fs.mkdir(plugin_dir, '0755');
 }
 
 var review_required = false;
@@ -27,24 +24,20 @@ if (!exists) {
   fs.openSync(config_file, 'w+');
   fs.writeFileSync(config_file, fs.readFileSync('./config.sample'));
   review_required = true;
-}
-irc.config = JSON.parse(fs.readFileSync(config_file));
 
-path.exists(user_file, function (exists) {
+  exists = path.existsSync(user_file)
   if (!exists) {
-    console.log('Creating a new users.json file');
-    fs.openSync(user_file, 'w+');
-    fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
-    review_required = true;
+      console.log('Creating a new users.json file');
+      fs.openSync(user_file, 'w+');
+      fs.writeFileSync(user_file, fs.readFileSync('./users.json.sample'));
+      review_required = true;
   }
   irc.users = JSON.parse(fs.readFileSync(user_file));
-});
 
-if (review_required) {
   console.log('  Please review the configuration files in ' + config_path);
-  console.log('  Documentation is coming soon');
-  return 1;
+  process.exit();
 }
+irc.config = JSON.parse(fs.readFileSync(config_file));
 
 irc.command_char = '!';
 irc.debug = true;
