@@ -159,6 +159,15 @@ irc.user = function (user, mode, realName, callback) {
           longParam: realName}, callback);
 };
 
+irc.quit = function (msg, callback) {
+  irc.act({action: 'QUIT', params: [msg]}, function () {
+    if (path.existsSync(lock_file))
+      fs.unlinkSync(lock_file);
+    callback();
+    process.exit(0);
+  });
+};
+
 irc._socket = net.connect(irc.config.port, irc.config.address, function () {
   var nick      = irc.config.nick;
   var user      = irc.config.user;
