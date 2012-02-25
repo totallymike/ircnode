@@ -2,6 +2,7 @@ var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
 var path      = require('path');
+var daemon    = require('daemon');
 
 var irc = {};
 
@@ -11,7 +12,6 @@ var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
 var log_file    = config_path + '/bot.log';
-var daemon_node = config_path + '/daemon';
 var lock_file   = '/tmp/ircnode.pid';
 
 var exists = path.existsSync(config_path);
@@ -61,23 +61,13 @@ case "stop":
   break;
 
 case "start":
-  if (!path.existsSync(daemon_node + '.node')) {
-    console.log('To run IRC Node in the background, you need to have daemon.node.');
-    console.log('Instructions on obtaining it are available on the Configuration');
-    console.log('wiki page. If you would like to run IRC Node without daemon');
-    console.log('support, execute \'js client.js front\'.');
-    process.exit(0);
-  } else if (path.existsSync(lock_file)) {
+  if (path.existsSync(lock_file)) {
     console.log('IRC Node seems to be already running on this system!');
     console.log('If this is not true, please delete the ' + lock_file);
     process.exit(0);
   } else {
-    var daemon = require(daemon_node);
-    fs.openSync(log_file, 'w+');
-    process.stdout = process.stderr = fs.createWriteStream(log_file);
-    dPID = daemon.start();
+    dPID = daemon.start(fs.openSync(log_file, 'w+'));
     daemon.lock(lock_file);
-    daemon.closeIO();
   }
   break;
 
