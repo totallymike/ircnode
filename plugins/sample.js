@@ -1,4 +1,5 @@
 // A sample plugin for IRC Node.
+// API documentation: https://github.com/totallymike/ircnode/wiki/PluginAPI
 
 /* First we get the irc object from global. Inside this object, all
  * all the api calls are made. In this example only privmsg is used. */
