@@ -54,8 +54,8 @@ irc.is_owner = function (nick) {
   return (irc.users[nick].auth === 'owner');
 };
 
-irc.privmsg  = function (chan, msg) {
-  irc._socket.write('PRIVMSG ' + chan + ' :' + msg + '\r\n');
+irc.privmsg  = function (target, msg) {
+  irc._socket.write('PRIVMSG ' + target + ' :' + msg + '\r\n');
 };
 
 irc.splitcmd = function (data) {
