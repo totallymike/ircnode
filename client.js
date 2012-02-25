@@ -61,7 +61,7 @@ case "stop":
   break;
 
 case "start":
-  if (!path.existsSync(daemon_node)) {
+  if (!path.existsSync(daemon_node + '.node')) {
     console.log('To run IRC Node in the background, you need to have daemon.node.');
     console.log('Instructions on obtaining it are available on the Configuration');
     console.log('wiki page. If you would like to run IRC Node without daemon');
