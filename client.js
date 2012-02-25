@@ -10,6 +10,8 @@ var config_path = (process.env.IRC_NODE_PATH ||
 var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
+var log_file    = config_path + '/bot.log';
+var lock_file   = '/tmp/ircnode.pid';
 
 var exists = path.existsSync(config_path);
 if (!exists) {
@@ -48,8 +50,57 @@ irc.readUsers = function (callback) {
 };
 
 irc.command_char = '!';
-irc.debug = process.env.IRC_NODE_DEBUG === 'true';
+irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
+
+var args = process.argv;
+var dPID;
+
+switch (args[2]) {
+case "front":
+  break;
+
+case "start":
+  if (path.existsSync(lock_file)) {
+    console.log('IRC Node seems to be already running on this system!');
+    console.log('If this is not true, please delete the ' + lock_file);
+    process.exit(0);
+  } else {
+    var daemon = require('daemon');
+    dPID = daemon.start(fs.openSync(log_file, 'w+'));
+    daemon.lock(lock_file);
+  }
+  break;
+
+case "restart":
+  if (!path.existsSync(lock_file)) {
+    console.log('IRC Node was not running before on this system!');
+  } else {
+    process.kill(parseInt(fs.readFileSync(lock_file)));
+    fs.unlinkSync(lock_file);
+  }
+  var daemon = require('daemon');
+  dPID = daemon.start(fs.openSync(log_file, 'w+'));
+  daemon.lock(lock_file);
+  break;
+
+case "stop":
+  if (!path.existsSync(lock_file)) {
+    console.log('IRC Node does not seem to be running on this system!');
+  } else {
+    process.kill(parseInt(fs.readFileSync(lock_file)));
+    fs.unlinkSync(lock_file);
+  }
+  process.exit(0);
+  break;
+
+default:
+  console.log('Usage: js client.js [front|start|restart|stop]');
+  process.exit(0);
+}
+
+fs.openSync(log_file, 'w+');
+process.stdout = process.stderr = fs.createWriteStream(log_file);
 
 irc.is_admin = function (nick) {
   if (typeof irc.users[nick] === 'undefined')
@@ -77,8 +128,12 @@ irc.splitcmd = function (data) {
   action.nick = nickuser.split('!')[0];
   action.user = nickuser.split('!')[1].split('@')[0];
   action.host = nickuser.split('!')[1].split('@')[1];
-  
+
   action.channel = params[2];
+  if (action.channel === irc.config.nick)
+    action.source = action.nick;
+  else
+    action.source = action.channel;
 
   params[3] = params[3].slice(2);
 
@@ -192,11 +247,11 @@ irc.emitter.on('disable', function (act) {
       if (irc.plugins[p].name === act.params[0]) {
         irc.plugins[p].enabled = false;
         irc.emitter.removeListener(irc.plugins[p].name, irc.plugins[p].handler);
-        irc.privmsg(act.channel, act.params[0] + ' disabled');
+        irc.privmsg(act.source, act.params[0] + ' disabled');
       }
     }
   } else {
-    irc.privmsg(act.channel, 'ERROR: not authorized');
+    irc.privmsg(act.source, 'ERROR: not authorized');
   }
 });
 
@@ -207,11 +262,11 @@ irc.emitter.on('enable', function (act) {
           irc.plugins[p].enabled === false) {
         irc.plugins[p].enabled = true;
         irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
-        irc.privmsg(act.channel, act.params[0] + ' enabled');
+        irc.privmsg(act.source, act.params[0] + ' enabled');
       }
     }
   } else {
-    irc.privmsg(act.channel, 'ERROR: not authorized');
+    irc.privmsg(act.source, 'ERROR: not authorized');
   }
 });
 
@@ -224,34 +279,36 @@ irc.emitter.on('set_auth', function (act) {
     irc.users[nick] = {};
 
   if (act.params.length < 2) {
-    irc.privmsg(act.channel, 'ERROR: Insufficient parameters');
+    irc.privmsg(act.source, 'ERROR: Insufficient parameters');
     return (1);
   }
   if (level !== 'user' && level !== 'owner' && level !== 'admin') {
-    irc.privmsg(act.channel, 'ERROR: Invalid parameter: ' + level);
+    irc.privmsg(act.source, 'ERROR: Invalid parameter: ' + level);
     return (1);
   }
   if (irc.is_owner(act.nick)) {
     if (nick === act.nick) {
-      irc.privmsg(act.channel, 'ERROR: Cannot change your own permissions!');
+      irc.privmsg(act.source, 'ERROR: Cannot change your own permissions!');
     } else {
       user.auth = level;
-      irc.privmsg(act.channel, nick + ' made to ' + level);
+      irc.privmsg(act.source, nick + ' made to ' + level);
     }
   } else {
-    irc.privmsg(act.channel, 'ERROR: Insufficient privileges');
+    irc.privmsg(act.source, 'ERROR: Insufficient privileges');
   }
 });
 
 irc.emitter.on('PRIVMSG', function (data) {
   irc.readUsers(function (users) {
     var nick = data.slice(0, data.indexOf('!'));
-    if (typeof users[nick] === 'undefined') {
-      users[nick] = {};
+    if (typeof irc.users[nick] === 'undefined') {
+      irc.users[nick] = {};
     }
-    users[nick].seen_time = new Date().toUTCString();
-    users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
-    users[nick].seen_channel = data.split(' ')[2];
+    if (data.split(' ')[2] != irc.config.nick) {
+      irc.users[nick].seen_time = new Date().toUTCString();
+      irc.users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
+      irc.users[nick].seen_channel = data.split(' ')[2];
+    }
   });
 });
 
@@ -260,10 +317,10 @@ irc.emitter.on('seen', function (act) {
   if (typeof irc.users[nick] === 'undefined' ||
       typeof irc.users[nick].seen_msg === 'undefined' ||
       typeof irc.users[nick].seen_time === 'undefined') {
-    irc.privmsg(act.channel, 'Unknown nick: ' + nick);
+    irc.privmsg(act.source, 'Unknown nick: ' + nick);
     return (1);
   }
-  irc.privmsg(act.channel, nick + ' last seen: ' + irc.users[nick].seen_time +
+  irc.privmsg(act.source, nick + ' last seen: ' + irc.users[nick].seen_time +
               " saying '" + irc.users[nick].seen_msg + "' in " +
               irc.users[nick].seen_channel);
 });
