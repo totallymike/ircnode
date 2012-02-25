@@ -10,6 +10,9 @@ var config_path = (process.env.IRC_NODE_PATH ||
 var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
+var log_file    = config_path + '/bot.log';
+var daemon_node = config_path + '/daemon';
+var lock_file   = '/tmp/ircnode.pid';
 
 var exists = path.existsSync(config_path);
 if (!exists) {
@@ -37,8 +40,54 @@ irc.config  = JSON.parse(fs.readFileSync(config_file));
 irc.users   = JSON.parse(fs.readFileSync(user_file));
 
 irc.command_char = '!';
-irc.debug = process.env.IRC_NODE_DEBUG === 'true';
+irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
+
+var args = process.argv;
+var dPID;
+
+switch (args[2]) {
+case "front":
+  break;
+
+case "stop":
+  if (!path.existsSync(lock_file)) {
+    console.log('IRC Node does not seem to be running on this system!');
+  } else {
+    process.kill(parseInt(fs.readFileSync(lock_file)));
+    fs.unlinkSync(lock_file);
+  }
+  process.exit(0);
+  break;
+
+case "start":
+  if (!path.existsSync(daemon_node)) {
+    console.log('To run IRC Node in the background, you need to have daemon.node.');
+    console.log('Instructions on obtaining it are available on the Configuration');
+    console.log('wiki page. If you would like to run IRC Node without daemon');
+    console.log('support, execute \'js client.js front\'.');
+    process.exit(0);
+  } else if (path.existsSync(lock_file)) {
+    console.log('IRC Node seems to be already running on this system!');
+    console.log('If this is not true, please delete the ' + lock_file);
+    process.exit(0);
+  } else {
+    var daemon = require(daemon_node);
+    fs.openSync(log_file, 'w+');
+    process.stdout = process.stderr = fs.createWriteStream(log_file);
+    dPID = daemon.start();
+    daemon.lock(lock_file);
+    daemon.closeIO();
+  }
+  break;
+
+default:
+  console.log('Usage: js client.js [front|start|stop]');
+  process.exit(0);
+}
+
+fs.openSync(log_file, 'w+');
+process.stdout = process.stderr = fs.createWriteStream(log_file);
 
 irc.is_admin = function (nick) {
   if (typeof irc.users[nick] === 'undefined')
