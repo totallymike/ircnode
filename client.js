@@ -50,16 +50,6 @@ switch (args[2]) {
 case "front":
   break;
 
-case "stop":
-  if (!path.existsSync(lock_file)) {
-    console.log('IRC Node does not seem to be running on this system!');
-  } else {
-    process.kill(parseInt(fs.readFileSync(lock_file)));
-    fs.unlinkSync(lock_file);
-  }
-  process.exit(0);
-  break;
-
 case "start":
   if (path.existsSync(lock_file)) {
     console.log('IRC Node seems to be already running on this system!');
@@ -71,8 +61,29 @@ case "start":
   }
   break;
 
+case "restart":
+  if (!path.existsSync(lock_file)) {
+    console.log('IRC Node was not running before on this system!');
+  } else {
+    process.kill(parseInt(fs.readFileSync(lock_file)));
+    fs.unlinkSync(lock_file);
+  }
+  dPID = daemon.start(fs.openSync(log_file, 'w+'));
+  daemon.lock(lock_file);
+  break;
+
+case "stop":
+  if (!path.existsSync(lock_file)) {
+    console.log('IRC Node does not seem to be running on this system!');
+  } else {
+    process.kill(parseInt(fs.readFileSync(lock_file)));
+    fs.unlinkSync(lock_file);
+  }
+  process.exit(0);
+  break;
+
 default:
-  console.log('Usage: js client.js [front|start|stop]');
+  console.log('Usage: js client.js [front|start|restart|stop]');
   process.exit(0);
 }
 
