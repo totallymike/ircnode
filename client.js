@@ -150,6 +150,10 @@ irc.join = function (channel, callback) {
   irc.act({action: 'JOIN', params: [channel]}, callback);
 };
 
+irc.part = function (channel, msg, callback) {
+  irc.act({action: 'PART', params: [channel, msg]}, callback);
+};
+
 irc.nick = function (nick, callback) {
   irc.act({action: 'NICK', params: [nick]}, callback);
 };
