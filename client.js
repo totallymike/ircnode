@@ -36,6 +36,17 @@ if (review_required) {
 irc.config  = JSON.parse(fs.readFileSync(config_file));
 irc.users   = JSON.parse(fs.readFileSync(user_file));
 
+irc.readConfig = function (callback) {
+  irc.config = JSON.parse(fs.readFileSync(config_file));
+  callback(irc.config);
+  fs.writeFile(config_file, JSON.stringify(irc.config, null, 2));
+};
+irc.readUsers = function (callback) {
+  irc.users = JSON.parse(fs.readFileSync(user_file));
+  callback(irc.users);
+  fs.writeFile(user_file, JSON.stringify(irc.users, null, 2));
+};
+
 irc.command_char = '!';
 irc.debug = process.env.IRC_NODE_DEBUG === 'true';
 irc.emitter = new events.EventEmitter();
@@ -233,13 +244,15 @@ irc.emitter.on('set_auth', function (act) {
 });
 
 irc.emitter.on('PRIVMSG', function (data) {
-  var nick = data.slice(0, data.indexOf('!'));
-  if (typeof irc.users[nick] === 'undefined') {
-    irc.users[nick] = {};
-  }
-  irc.users[nick].seen_time = new Date().toUTCString();
-  irc.users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
-  irc.users[nick].seen_channel = data.split(' ')[2];
+  irc.readUsers(function (users) {
+    var nick = data.slice(0, data.indexOf('!'));
+    if (typeof users[nick] === 'undefined') {
+      users[nick] = {};
+    }
+    users[nick].seen_time = new Date().toUTCString();
+    users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
+    users[nick].seen_channel = data.split(' ')[2];
+  });
 });
 
 irc.emitter.on('seen', function (act) {
