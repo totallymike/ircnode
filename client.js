@@ -2,7 +2,6 @@ var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
 var path      = require('path');
-var daemon    = require('daemon');
 
 var irc = {};
 
@@ -56,6 +55,7 @@ case "start":
     console.log('If this is not true, please delete the ' + lock_file);
     process.exit(0);
   } else {
+    var daemon = require('daemon');
     dPID = daemon.start(fs.openSync(log_file, 'w+'));
     daemon.lock(lock_file);
   }
@@ -68,6 +68,7 @@ case "restart":
     process.kill(parseInt(fs.readFileSync(lock_file)));
     fs.unlinkSync(lock_file);
   }
+  var daemon = require('daemon');
   dPID = daemon.start(fs.openSync(log_file, 'w+'));
   daemon.lock(lock_file);
   break;
