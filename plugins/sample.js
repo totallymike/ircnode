@@ -1,30 +1,40 @@
-/* A sample plugin.
- * First we take the irc object from global (there has to be a better
- * way to do that).  Here we use it to access the privmsg function,
- * but you could really pull anything that's attached to it.
- *
- * Then we give the plugin a name, designate a handler and export
- * them back to the 'main' module, where they are stored and processed. */
+// A sample plugin for IRC Node.
 
+/* First we get the irc object from global. Inside this object, all
+ * all the api calls are made. In this example only privmsg is used. */
+// TODO Look if there is a better way to get the irc object
 var irc = global.irc;
 
+/* Then the command handler function is created. This handler function
+ * is called when the command is triggered. The developer can choose
+ * the structure of the plugin as he/she wishes but a main handler
+ * function always needs to be created. */
 var test_handler = function (act) {
+
+  /* If no parameters are added to the command, we just send 'test'
+   * back to the source. */
   if (act.params.length === 0) {
     irc.privmsg(act.channel, 'test');
-  } else {
+  }
+
+  /* If there are parameters, then they are joined into one string
+   * and then sent back to the source. */
+  else {
     irc.privmsg(act.channel, act.params.join(' '));
   }
+
 };
 
-/* This is where the final object is built.  'name' is how the plugin
- * will be referred to in methods that control plugins, and handler
- * is the hnadler that is controlled.
+/* Afterwards the plugin needs to be exported back to the "main" module.
  *
- * For example, this plugin is called 'test'.  Admins can enable/disable
- * plugins by using the !enable or !disable command in a channel and calling
- * this name like so:
- * !enable test
- * That will detach the handler, in this case test_handler, from the event
- * emitter. */
+ * The 'name' property is how the plugin is referred to. That means that
+ * if the plugin is named 'test', then '!test' will trigger it and the
+ * '!enable test' and '!disable test' commands by admins would enable
+ * and disable them, respectively. Disabling a plugin includes deataching
+ * it from the event emitter.
+ *
+ * The 'handler' property is the function that is called when the plugin
+ * is triggered. In this example, '!test [PARAMS]' would call the
+ * 'test_handler (act)' function. */
 exports.name = 'test';
 exports.handler = test_handler;
