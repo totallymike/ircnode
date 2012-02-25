@@ -15,13 +15,13 @@ var test_handler = function (act) {
   /* If no parameters are added to the command, we just send 'test'
    * back to the source. */
   if (act.params.length === 0) {
-    irc.privmsg(act.channel, 'test');
+    irc.privmsg(act.source, 'test');
   }
 
   /* If there are parameters, then they are joined into one string
    * and then sent back to the source. */
   else {
-    irc.privmsg(act.channel, act.params.join(' '));
+    irc.privmsg(act.source, act.params.join(' '));
   }
 
 };
