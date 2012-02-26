@@ -60,7 +60,7 @@ case "start":
     process.exit(0);
   } else {
     var daemon = require('daemon');
-    dPID = daemon.start(fs.openSync(log_file, 'w+'));
+    dPID = daemon.start(fs.openSync(log_file, 'a+'));
     daemon.lock(lock_file);
   }
   break;
@@ -73,7 +73,7 @@ case "restart":
     fs.unlinkSync(lock_file);
   }
   var daemon = require('daemon');
-  dPID = daemon.start(fs.openSync(log_file, 'w+'));
+  dPID = daemon.start(fs.openSync(log_file, 'a+'));
   daemon.lock(lock_file);
   break;
 
@@ -91,9 +91,6 @@ default:
   console.log('Usage: js client.js [front|start|restart|stop]');
   process.exit(0);
 }
-
-fs.openSync(log_file, 'w+');
-process.stdout = process.stderr = fs.createWriteStream(log_file);
 
 irc.is_admin = function (nick) {
   if (typeof irc.users[nick] === 'undefined')
