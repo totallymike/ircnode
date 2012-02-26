@@ -7,7 +7,8 @@ var path      = require('path');
 var irc = {};
 
 var config_path = (process.env.IRC_NODE_PATH ||
-                   process.env.HOME + '/.ircnode');
+                   process.env[(process.platform === 'win32') ?
+                   'USERPROFILE' : 'HOME'] + '/.ircnode'););
 var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
@@ -65,10 +66,16 @@ case "start":
     try {
       var daemon = require('daemon');
     } catch (err) {
-      console.log('You do not have daemon.node available. Please');
-      console.log('follow the instructions on the Configuration');
-      console.log('wiki page for set-up. You can still launch the');
-      console.log('bot without daemon using \'node client.js front\'.');
+      if (process.platform === 'win32') {
+        console.log('There is no daemon support for Windows. You can');
+        console.log('still use the bot without daemon by launching');
+        console.log('it with \'node client.js front\'.');
+      } else {
+        console.log('You do not have daemon.node available. Please');
+        console.log('follow the instructions on the Configuration');
+        console.log('wiki page for set-up. You can still launch the');
+        console.log('bot without daemon using \'node client.js front\'.');
+      }
       process.exit(0);
       break;
     }
@@ -87,10 +94,16 @@ case "restart":
   try {
     var daemon = require('daemon');
   } catch (err) {
-    console.log('You do not have daemon.node available. Please');
-    console.log('follow the instructions on the Configuration');
-    console.log('wiki page for set-up. You can still launch the');
-    console.log('bot without daemon using \'node client.js front\'.');
+    if (process.platform === 'win32') {
+      console.log('There is no daemon support for Windows. You can');
+      console.log('still use the bot without daemon by launching');
+      console.log('it with \'node client.js front\'.');
+    } else {
+      console.log('You do not have daemon.node available. Please');
+      console.log('follow the instructions on the Configuration');
+      console.log('wiki page for set-up. You can still launch the');
+      console.log('bot without daemon using \'node client.js front\'.');
+    }
     process.exit(0);
     break;
   }
