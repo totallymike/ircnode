@@ -25,7 +25,7 @@ var review_required = false;
   if (!exists) {
     var sample_file = './' + path.basename(file) + '.sample';
     fs.openSync(file, 'w+');
-    fs.writeFileSync(file, sample_file);
+    fs.writeFileSync(file, fs.readFileSync(sample_file));
     console.log('Creating a new ' + file + ' + file.');
     review_required = true;
   }
@@ -81,7 +81,7 @@ case "restart":
   if (!path.existsSync(lock_file)) {
     console.log('IRC Node was not running before on this system!');
   } else {
-    process.kill(parseInt(fs.readFileSync(lock_file)));
+    process.kill(parseInt(fs.readFileSync(lock_file), 10));
     fs.unlinkSync(lock_file);
   }
   var daemon = require('daemon');
@@ -93,7 +93,7 @@ case "stop":
   if (!path.existsSync(lock_file)) {
     console.log('IRC Node does not seem to be running on this system!');
   } else {
-    process.kill(parseInt(fs.readFileSync(lock_file)));
+    process.kill(parseInt(fs.readFileSync(lock_file), 10));
     fs.unlinkSync(lock_file);
   }
   process.exit(0);
@@ -166,6 +166,10 @@ irc.join = function (channel, callback) {
   irc.act({action: 'JOIN', params: [channel]}, callback);
 };
 
+irc.part = function (channel, msg, callback) {
+  irc.act({action: 'PART', params: [channel, msg]}, callback);
+};
+
 irc.nick = function (nick, callback) {
   irc.act({action: 'NICK', params: [nick]}, callback);
 };
@@ -173,6 +177,15 @@ irc.nick = function (nick, callback) {
 irc.user = function (user, mode, realName, callback) {
   irc.act({action: 'USER', params: [user, mode, '*'],
           longParam: realName}, callback);
+};
+
+irc.quit = function (msg, callback) {
+  irc.act({action: 'QUIT', params: [msg]}, function () {
+    if (path.existsSync(lock_file))
+      fs.unlinkSync(lock_file);
+    callback();
+    process.exit(0);
+  });
 };
 
 irc._socket = net.connect(irc.config.port, irc.config.address, function () {
@@ -308,7 +321,7 @@ irc.emitter.on('PRIVMSG', function (data) {
   if (typeof irc.users[nick] === 'undefined') {
     irc.users[nick] = {};
   }
-  if (data.split(' ')[2] != irc.config.nick) {
+  if (data.split(' ')[2] !== irc.config.nick) {
     irc.users[nick].seen_time = new Date().toUTCString();
     irc.users[nick].seen_msg  = data.slice(data.indexOf(':') + 1);
     irc.users[nick].seen_channel = data.split(' ')[2];
