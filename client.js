@@ -119,6 +119,12 @@ case "stop":
   break;
 }
 
+var version = '0.1.0';
+fs.readFile('global.__dirname/../ircnode/package.json', function (err, data) {
+  if (err) throw err;
+  version = JSON.parse(data)['version'];
+});
+
 irc.check_level = function (nick, level, callback) {
   if (typeof irc.users[nick] === 'undefined')
     callback(false);
@@ -380,3 +386,6 @@ irc.emitter.on('seen', function (act) {
               irc.users[nick].seen_channel);
 });
 
+irc.emitter.on('version', function (act) {
+  irc.privmsg(act.source, 'IRC Node ' + version);
+});
