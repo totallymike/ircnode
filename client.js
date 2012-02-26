@@ -95,18 +95,56 @@ default:
 fs.openSync(log_file, 'w+');
 process.stdout = process.stderr = fs.createWriteStream(log_file);
 
-irc.is_admin = function (nick) {
+irc.is_admin = function (nick, callback) {
   if (typeof irc.users[nick] === 'undefined')
-    return false;
-  
-  return (irc.users[nick].auth === 'admin' || irc.users[nick].auth === 'owner');
+    callback(false);
+  else if (typeof irc.users[nick].auth === 'undefined')
+    callback(false);
+  else if (irc.users[nick].auth === 'admin' || irc.users[nick].auth === 'owner') {
+    var listener = function (data) {
+      var params = data.split(' ').slice(4);
+      var source = data.slice(0, data.indexOf('!'));
+      if (params.length < 2) return;
+      if (source !== 'NickServ') return;
+      if (params[params.length - 2] === nick) {
+        irc.emitter.removeListener('NOTICE', listener);
+        if (params[params.length - 1] === '3')
+          callback(true);
+        else
+          callback(false);
+      }
+    };
+    irc.emitter.on('NOTICE', listener);
+    irc.privmsg('NickServ', 'ACC ' + nick);
+    irc.privmsg('NickServ', 'STATUS ' + nick);
+  } else
+    callback(false);
 };
 
-irc.is_owner = function (nick) {
+irc.is_owner = function (nick, callback) {
   if (typeof irc.users[nick] === 'undefined')
-    return false;
-
-  return (irc.users[nick].auth === 'owner');
+    callback(false);
+  else if (typeof irc.users[nick].auth === 'undefined')
+    callback(false);
+  else if (irc.users[nick].auth === 'owner') {
+    var listener = function (data) {
+      var params = data.split(' ').slice(4);
+      var source = data.slice(0, data.indexOf('!'));
+      if (params.length < 2) return;
+      if (source !== 'NickServ') return;
+      if (params[params.length - 2] === nick) {
+        irc.emitter.removeListener('NOTICE', listener);
+        if (params[params.length - 1] === '3')
+          callback(true);
+        else
+          callback(false);
+      }
+    };
+    irc.emitter.on('NOTICE', listener);
+    irc.privmsg('NickServ', 'ACC ' + nick);
+    irc.privmsg('NickServ', 'STATUS ' + nick);
+  } else
+    callback(false);
 };
 
 irc.privmsg  = function (target, msg) {
@@ -186,9 +224,10 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
     irc.user(user, '8', realName, function () {
       var has_admin = false;
       for (var u in irc.users) {
-        if (irc.is_admin(u)) {
-          has_admin = true;
-        }
+        if (typeof irc.users[u] !== 'undefined')
+          if (typeof irc.users[u].auth !== 'undefined')
+            if (irc.users[u].auth === 'admin' || irc.users[u].auth === 'owner')
+              has_admin = true;
       }
       if (!has_admin) {
         throw ("An admin must be configured in users.json!");
@@ -248,32 +287,36 @@ fs.readdir(plugin_dir, function (err, files) {
 });
 
 irc.emitter.on('disable', function (act) {
-  if (irc.is_admin(act.nick) === true) {
-    for (var p in irc.plugins) {
-      if (irc.plugins[p].name === act.params[0]) {
-        irc.plugins[p].enabled = false;
-        irc.emitter.removeListener(irc.plugins[p].name, irc.plugins[p].handler);
-        irc.privmsg(act.source, act.params[0] + ' disabled');
+  irc.is_admin(act.nick, function (is_admin) {
+    if (is_admin) {
+      for (var p in irc.plugins) {
+        if (irc.plugins[p].name === act.params[0]) {
+          irc.plugins[p].enabled = false;
+          irc.emitter.removeListener(irc.plugins[p].name, irc.plugins[p].handler);
+          irc.privmsg(act.source, act.params[0] + ' disabled');
+        }
       }
+    } else {
+      irc.privmsg(act.source, 'ERROR: not authorized');
     }
-  } else {
-    irc.privmsg(act.source, 'ERROR: not authorized');
-  }
+  });
 });
 
 irc.emitter.on('enable', function (act) {
-  if (irc.is_admin(act.nick) === true) {
-    for (var p in irc.plugins) {
-      if (irc.plugins[p].name === act.params[0] &&
-          irc.plugins[p].enabled === false) {
-        irc.plugins[p].enabled = true;
-        irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
-        irc.privmsg(act.source, act.params[0] + ' enabled');
+  irc.is_admin(act.nick, function (is_admin) {
+    if (is_admin) {
+      for (var p in irc.plugins) {
+        if (irc.plugins[p].name === act.params[0] &&
+            irc.plugins[p].enabled === false) {
+          irc.plugins[p].enabled = true;
+          irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
+          irc.privmsg(act.source, act.params[0] + ' enabled');
+        }
       }
+    } else {
+      irc.privmsg(act.source, 'ERROR: not authorized');
     }
-  } else {
-    irc.privmsg(act.source, 'ERROR: not authorized');
-  }
+  });
 });
 
 irc.emitter.on('set_auth', function (act) {
@@ -292,16 +335,18 @@ irc.emitter.on('set_auth', function (act) {
     irc.privmsg(act.source, 'ERROR: Invalid parameter: ' + level);
     return (1);
   }
-  if (irc.is_owner(act.nick)) {
-    if (nick === act.nick) {
-      irc.privmsg(act.source, 'ERROR: Cannot change your own permissions!');
+  irc.is_owner(act.nick, function (is_owner) {
+    if (is_owner) {
+      if (nick === act.nick) {
+        irc.privmsg(act.source, 'ERROR: Cannot change your own permissions!');
+      } else {
+        user.auth = level;
+        irc.privmsg(act.source, nick + ' made to ' + level);
+      }
     } else {
-      user.auth = level;
-      irc.privmsg(act.source, nick + ' made to ' + level);
+      irc.privmsg(act.source, 'ERROR: Insufficient privileges');
     }
-  } else {
-    irc.privmsg(act.source, 'ERROR: Insufficient privileges');
-  }
+  });
 });
 
 irc.emitter.on('PRIVMSG', function (data) {
