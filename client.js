@@ -13,7 +13,7 @@ var plugin_dir  = config_path + '/plugins/';
 var log_file    = config_path + '/bot.log';
 var lock_file   = '/tmp/ircnode.pid';
 
-var irc.auth_levels = ['admin', 'owner'];
+irc.auth_levels = [ 'admin', 'owner' ];
 
 var exists = path.existsSync(config_path);
 if (!exists) {
