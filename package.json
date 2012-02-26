@@ -1,0 +1,17 @@
+{
+  "author": "Michael Westbom <totallymike@gmail.com> (http://github.com/totallymike)",
+  "name": "ircnode",
+  "description": "A simple, extensible IRC bot",
+  "version": "0.0.9",
+  "homepage": "http://github.com/totallymike/ircnode",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/totallymike/ircnode.git"
+  },
+  "engines": {
+    "node": "~0.6.11"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
