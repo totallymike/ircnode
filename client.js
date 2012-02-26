@@ -268,7 +268,7 @@ fs.readdir(plugin_dir, function (err, files) {
 });
 
 irc.emitter.on('disable', function (act) {
-  irc.is_admin(act.nick, function (is_admin) {
+  irc.check_level(act.nick, 'admin', function (is_admin) {
     if (is_admin) {
       for (var p in irc.plugins) {
         if (irc.plugins[p].name === act.params[0]) {
@@ -284,7 +284,7 @@ irc.emitter.on('disable', function (act) {
 });
 
 irc.emitter.on('enable', function (act) {
-  irc.is_admin(act.nick, function (is_admin) {
+  irc.check_level(act.nick, 'admin', function (is_admin) {
     if (is_admin) {
       for (var p in irc.plugins) {
         if (irc.plugins[p].name === act.params[0] &&
@@ -316,7 +316,7 @@ irc.emitter.on('set_auth', function (act) {
     irc.privmsg(act.source, 'ERROR: Invalid parameter: ' + level);
     return (1);
   }
-  irc.is_owner(act.nick, function (is_owner) {
+  irc.check_level(act.nick, 'owner', function (is_owner) {
     if (is_owner) {
       if (nick === act.nick) {
         irc.privmsg(act.source, 'ERROR: Cannot change your own permissions!');
