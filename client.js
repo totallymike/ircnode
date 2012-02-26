@@ -61,7 +61,15 @@ case "start":
     console.log('If this is not true, please delete the ' + lock_file);
     process.exit(0);
   } else {
-    var daemon = require('daemon');
+    try {
+      var daemon = require('daemon');
+    } catch (err) {
+      console.log('You do not have daemon.node available.');
+      console.log('Please follow the instructions on the ');
+      console.log('Configuration wiki page for set-up.');
+      process.exit(0);
+      break;
+    }
     dPID = daemon.start(fs.openSync(log_file, 'a+'));
     daemon.lock(lock_file);
   }
@@ -74,7 +82,15 @@ case "restart":
     process.kill(parseInt(fs.readFileSync(lock_file), 10));
     fs.unlinkSync(lock_file);
   }
-  var daemon = require('daemon');
+  try {
+    var daemon = require('daemon');
+  } catch (err) {
+    console.log('You do not have daemon.node available.');
+    console.log('Please follow the instructions on the ');
+    console.log('Configuration wiki page for set-up.');
+    process.exit(0);
+    break;
+  }
   dPID = daemon.start(fs.openSync(log_file, 'a+'));
   daemon.lock(lock_file);
   break;
