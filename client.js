@@ -8,7 +8,7 @@ var irc = {};
 
 var config_path = (process.env.IRC_NODE_PATH ||
                    process.env[(process.platform === 'win32') ?
-                   'USERPROFILE' : 'HOME'] + '/.ircnode'););
+                   'USERPROFILE' : 'HOME'] + '/.ircnode');
 var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
