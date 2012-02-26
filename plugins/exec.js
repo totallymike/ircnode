@@ -3,7 +3,7 @@
 var irc = global.irc;
 
 var exec_handler = function (act) {
-  irc.is_owner(act.nick, function (is_owner) {
+  irc.check_level(act.nick, 'owner', function (is_owner) {
     if (!is_owner)
       irc.privmsg(act.source, 'ERROR: not authorized');
     else if (act.params.length === 0)
