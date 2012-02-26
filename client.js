@@ -39,20 +39,8 @@ irc.userLoop = setInterval(function () {
   fs.writeFile(user_file, JSON.stringify(irc.users, null, 2));
 }, 20000);
 
-
 irc.config  = JSON.parse(fs.readFileSync(config_file));
 irc.users   = JSON.parse(fs.readFileSync(user_file));
-
-irc.readConfig = function (callback) {
-  irc.config = JSON.parse(fs.readFileSync(config_file));
-  callback(irc.config);
-  fs.writeFile(config_file, JSON.stringify(irc.config, null, 2));
-};
-irc.readUsers = function (callback) {
-  irc.users = JSON.parse(fs.readFileSync(user_file));
-  callback(irc.users);
-  fs.writeFile(user_file, JSON.stringify(irc.users, null, 2));
-};
 
 irc.command_char = '!';
 irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
@@ -340,3 +328,4 @@ irc.emitter.on('seen', function (act) {
               " saying '" + irc.users[nick].seen_msg + "' in " +
               irc.users[nick].seen_channel);
 });
+
