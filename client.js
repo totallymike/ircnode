@@ -13,6 +13,8 @@ var plugin_dir  = config_path + '/plugins/';
 var log_file    = config_path + '/bot.log';
 var lock_file   = '/tmp/ircnode.pid';
 
+var irc.auth_levels = ['admin', 'owner'];
+
 var exists = path.existsSync(config_path);
 if (!exists) {
   fs.mkdirSync(config_path, '0755');
@@ -95,12 +97,12 @@ default:
 fs.openSync(log_file, 'w+');
 process.stdout = process.stderr = fs.createWriteStream(log_file);
 
-irc.is_admin = function (nick, callback) {
+irc.check_level = function (nick, level, callback) {
   if (typeof irc.users[nick] === 'undefined')
     callback(false);
   else if (typeof irc.users[nick].auth === 'undefined')
     callback(false);
-  else if (irc.users[nick].auth === 'admin' || irc.users[nick].auth === 'owner') {
+  else if (irc.auth_levels.indexOf(level) !== -1) {
     var listener = function (data) {
       var params = data.split(' ').slice(4);
       var source = data.slice(0, data.indexOf('!'));
@@ -121,30 +123,12 @@ irc.is_admin = function (nick, callback) {
     callback(false);
 };
 
+irc.is_admin = function (nick, callback) {
+  irc.check_level(nick, 'admin', callback);
+};
+
 irc.is_owner = function (nick, callback) {
-  if (typeof irc.users[nick] === 'undefined')
-    callback(false);
-  else if (typeof irc.users[nick].auth === 'undefined')
-    callback(false);
-  else if (irc.users[nick].auth === 'owner') {
-    var listener = function (data) {
-      var params = data.split(' ').slice(4);
-      var source = data.slice(0, data.indexOf('!'));
-      if (params.length < 2) return;
-      if (source !== 'NickServ') return;
-      if (params[params.length - 2] === nick) {
-        irc.emitter.removeListener('NOTICE', listener);
-        if (params[params.length - 1] === '3')
-          callback(true);
-        else
-          callback(false);
-      }
-    };
-    irc.emitter.on('NOTICE', listener);
-    irc.privmsg('NickServ', 'ACC ' + nick);
-    irc.privmsg('NickServ', 'STATUS ' + nick);
-  } else
-    callback(false);
+  irc.check_level(nick, 'owner', callback);
 };
 
 irc.privmsg  = function (target, msg) {
