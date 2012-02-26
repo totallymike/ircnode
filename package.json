@@ -1,5 +1,11 @@
 {
   "author": "Michael Westbom <totallymike@gmail.com> (http://github.com/totallymike)",
+  "contributors": [
+    { "name": "Valter Strods",
+      "email": "valter.strods@gmail.com",
+      "url":    "http://github.com/thatvalterguy"
+    }
+  ],
   "name": "ircnode",
   "description": "A simple, extensible IRC bot",
   "version": "0.0.9",
@@ -9,9 +15,12 @@
     "url": "git://github.com/totallymike/ircnode.git"
   },
   "engines": {
-    "node": "~0.6.11"
+    "node": ">=0.6.11"
   },
-  "dependencies": {},
+  "bin": { "ircnode": "./client.js" },
+  "dependencies": {
+    "daemon": ">=0.4.1"
+  },
   "devDependencies": {},
   "optionalDependencies": {}
 }
