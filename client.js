@@ -54,9 +54,6 @@ var args = process.argv;
 var dPID;
 
 switch (args[2]) {
-case "front":
-  break;
-
 case "start":
   if (path.existsSync(lock_file)) {
     console.log('IRC Node seems to be already running on this system!');
@@ -120,10 +117,6 @@ case "stop":
   }
   process.exit(0);
   break;
-
-default:
-  console.log('Usage: js client.js [front|start|restart|stop]');
-  process.exit(0);
 }
 
 irc.check_level = function (nick, level, callback) {
