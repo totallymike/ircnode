@@ -119,7 +119,7 @@ case "stop":
   break;
 }
 
-var version = '0.1.0';
+var version = '(unknown version)';
 fs.readFile('global.__dirname/../ircnode/package.json', function (err, data) {
   if (err) throw err;
   version = JSON.parse(data)['version'];
