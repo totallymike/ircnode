@@ -25,7 +25,7 @@ var review_required = false;
   if (!exists) {
     var sample_file = './' + path.basename(file) + '.sample';
     fs.openSync(file, 'w+');
-    fs.writeFileSync(file, sample_file);
+    fs.writeFileSync(file, fs.readFileSync(sample_file));
     console.log('Creating a new ' + file + ' + file.');
     review_required = true;
   }
