@@ -120,9 +120,22 @@ case "stop":
 }
 
 var version = '(unknown version)';
-fs.readFile('global.__dirname/../ircnode/package.json', function (err, data) {
-  if (err) throw err;
-  version = JSON.parse(data)['version'];
+path.exists(__dirname + '/package.json', function (exists) {
+  if (exists) {
+    fs.readFile(__dirname + '/package.json', 'utf8', function (err, data) {
+      if (err !== null) console.log(err);
+      else version = JSON.parse(data)['version'];
+    });
+  } else {
+    path.exists(__dirname + '/../ircnode/package.json', function (exists) {
+      if (exists) {
+        fs.readFile(__dirname + '/../ircnode/package.json', 'utf8', function (err, data) {
+          if (err !== null) console.log(err);
+          else version = JSON.parse(data)['version'];
+        });
+      }
+    });
+  }
 });
 
 irc.check_level = function (nick, level, callback) {
