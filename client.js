@@ -64,9 +64,10 @@ case "start":
     try {
       var daemon = require('daemon');
     } catch (err) {
-      console.log('You do not have daemon.node available.');
-      console.log('Please follow the instructions on the ');
-      console.log('Configuration wiki page for set-up.');
+      console.log('You do not have daemon.node available. Please');
+      console.log('follow the instructions on the Configuration');
+      console.log('wiki page for set-up. You can still launch the');
+      console.log('bot without daemon using \'node client.js front\'.');
       process.exit(0);
       break;
     }
@@ -85,9 +86,10 @@ case "restart":
   try {
     var daemon = require('daemon');
   } catch (err) {
-    console.log('You do not have daemon.node available.');
-    console.log('Please follow the instructions on the ');
-    console.log('Configuration wiki page for set-up.');
+    console.log('You do not have daemon.node available. Please');
+    console.log('follow the instructions on the Configuration');
+    console.log('wiki page for set-up. You can still launch the');
+    console.log('bot without daemon using \'node client.js front\'.');
     process.exit(0);
     break;
   }
