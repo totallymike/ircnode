@@ -2,12 +2,12 @@
   "author": "Michael Westbom <totallymike@gmail.com> (http://github.com/totallymike)",
   "contributors": [
     { "name": "Valter Strods",
-      "email": "valter.strods@gmail.com",
-      "url":    "http://github.com/thatvalterguy"
+      "email": "thatvalterguy@gmail.com",
+      "url": "https://github.com/thatvalterguy"
     }
   ],
   "name": "ircnode",
-  "description": "A simple, extensible IRC bot",
+  "description": "Simple, extensible IRC bot",
   "version": "0.0.9",
   "homepage": "http://github.com/totallymike/ircnode",
   "repository": {
