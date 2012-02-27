@@ -64,15 +64,14 @@ case "start":
       var daemon = require('daemon');
     } catch (err) {
       if (process.platform === 'win32') {
-        console.log('There is no daemon support for Windows. You can');
-        console.log('still use the bot without daemon by launching');
-        console.log('it with \'node client.js front\'.');
+        console.log('There is no daemon support for Windows.');
       } else {
         console.log('You do not have daemon.node available. Please');
-        console.log('follow the instructions on the Configuration');
-        console.log('wiki page for set-up. You can still launch the');
-        console.log('bot without daemon using \'node client.js front\'.');
+        console.log('run \'npm install daemon\' to install it to the');
+        console.log('working directory.');
       }
+      console.log('You can still launch the bot without daemon');
+      console.log('by simply launching it without any arguments.')
       process.exit(0);
       break;
     }
@@ -92,15 +91,14 @@ case "restart":
     var daemon = require('daemon');
   } catch (err) {
     if (process.platform === 'win32') {
-      console.log('There is no daemon support for Windows. You can');
-      console.log('still use the bot without daemon by launching');
-      console.log('it with \'node client.js front\'.');
+      console.log('There is no daemon support for Windows.');
     } else {
       console.log('You do not have daemon.node available. Please');
-      console.log('follow the instructions on the Configuration');
-      console.log('wiki page for set-up. You can still launch the');
-      console.log('bot without daemon using \'node client.js front\'.');
+      console.log('run \'npm install daemon\' to install it to the');
+      console.log('working directory.');
     }
+    console.log('You can still launch the bot without daemon');
+    console.log('by simply launching it without any arguments.');
     process.exit(0);
     break;
   }
