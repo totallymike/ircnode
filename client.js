@@ -120,18 +120,40 @@ case "stop":
 }
 
 var version = '(unknown version)';
-path.exists(__dirname + '/package.json', function (exists) {
+path.exists(__dirname + '/.git/', function (exists) {
   if (exists) {
-    fs.readFile(__dirname + '/package.json', 'utf8', function (err, data) {
-      if (err !== null) console.log(err);
-      else version = JSON.parse(data).version;
-    });
+    var exec = require('child_process').exec;
+    exec((process.platform === 'win32') ?
+         "git log -n1 --format=%%h" : "git log -n1 --format=%h",
+         function (err, stdout, stderr) {
+          version = 'commit ' + stdout;
+        }
+    );
   } else {
-    path.exists(__dirname + '/../ircnode/package.json', function (exists) {
+    path.exists(__dirname + '/package.json', function (exists) {
       if (exists) {
-        fs.readFile(__dirname + '/../ircnode/package.json', 'utf8', function (err, data) {
+        fs.readFile(__dirname + '/package.json', 'utf8', function (err, data) {
           if (err !== null) console.log(err);
-          else version = JSON.parse(data).version;
+          else
+            try {
+              version = JSON.parse(data).version;
+            } catch (err) {
+              console.log(err);
+            }
+        });
+      } else {
+        path.exists(__dirname + '/../ircnode/package.json', function (exists) {
+          if (exists) {
+            fs.readFile(__dirname + '/../ircnode/package.json', 'utf8', function (err, data) {
+              if (err !== null) console.log(err);
+              else
+                try {
+                  version = JSON.parse(data).version;
+                } catch (err) {
+                  console.log(err);
+                }
+            });
+          }
         });
       }
     });
