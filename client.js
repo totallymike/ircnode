@@ -117,6 +117,46 @@ case "stop":
   break;
 }
 
+var version = '(unknown version)';
+path.exists(__dirname + '/.git/', function (exists) {
+  if (exists) {
+    var exec = require('child_process').exec;
+    exec("git log -n1 --format=%h",
+         function (err, stdout, stderr) {
+          version = 'commit ' + stdout;
+        }
+    );
+  } else {
+    path.exists(__dirname + '/package.json', function (exists) {
+      if (exists) {
+        fs.readFile(__dirname + '/package.json', 'utf8', function (err, data) {
+          if (err !== null) console.log(err);
+          else
+            try {
+              version = JSON.parse(data).version;
+            } catch (err) {
+              console.log(err);
+            }
+        });
+      } else {
+        path.exists(__dirname + '/../ircnode/package.json', function (exists) {
+          if (exists) {
+            fs.readFile(__dirname + '/../ircnode/package.json', 'utf8', function (err, data) {
+              if (err !== null) console.log(err);
+              else
+                try {
+                  version = JSON.parse(data).version;
+                } catch (err) {
+                  console.log(err);
+                }
+            });
+          }
+        });
+      }
+    });
+  }
+});
+
 irc.check_level = function (nick, level, callback) {
   if (typeof irc.users[nick] === 'undefined')
     callback(false);
@@ -383,3 +423,6 @@ irc.emitter.on('seen', function (act) {
               irc.users[nick].seen_channel);
 });
 
+irc.emitter.on('version', function (act) {
+  irc.privmsg(act.source, 'IRC Node ' + version);
+});
