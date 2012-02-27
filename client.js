@@ -71,7 +71,7 @@ case "start":
         console.log('working directory.');
       }
       console.log('You can still launch the bot without daemon');
-      console.log('by simply launching it without any arguments.')
+      console.log('by simply launching it without any arguments.');
       process.exit(0);
       break;
     }
