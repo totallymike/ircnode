@@ -46,8 +46,7 @@ irc.userLoop = setInterval(function () {
 irc.config  = JSON.parse(fs.readFileSync(config_file));
 irc.users   = JSON.parse(fs.readFileSync(user_file));
 
-irc.command_char = (process.env.IRC_NODE_PREFIX ? process.env.IRC_NODE_PREFIX.substring(0,
-                   process.env.IRC_NODE_PREFIX.length) : irc.config.prefix || '!');
+irc.command_char = (process.env.IRC_NODE_PREFIX || irc.config.prefix || '!');
 irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
 
