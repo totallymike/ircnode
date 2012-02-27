@@ -123,8 +123,7 @@ var version = '(unknown version)';
 path.exists(__dirname + '/.git/', function (exists) {
   if (exists) {
     var exec = require('child_process').exec;
-    exec((process.platform === 'win32') ?
-         "git log -n1 --format=%%h" : "git log -n1 --format=%h",
+    exec("git log -n1 --format=%h",
          function (err, stdout, stderr) {
           version = 'commit ' + stdout;
         }
