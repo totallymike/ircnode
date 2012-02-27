@@ -283,10 +283,15 @@ global.irc = irc;
 irc.plugins = [];
 fs.readdir(plugin_dir, function (err, files) {
   for (var i = 0, len = files.length; i < len; i += 1) {
-    var plugin = require(plugin_dir + files[i]);
-    plugin.enabled = true;
-    irc.plugins.push(plugin);
-    irc.emitter.on(plugin.name, plugin.handler);
+    var ppath = plugin_dir + files[i];
+    if (ppath.indexOf('.js', ppath.length - 3) === -1) {
+      console.log('Invalid plugin file: ' + files[i]);
+    } else {
+      var plugin = require(ppath);
+      plugin.enabled = true;
+      irc.plugins.push(plugin);
+      irc.emitter.on(plugin.name, plugin.handler);
+    }
   }
 });
 
