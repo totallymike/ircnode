@@ -124,14 +124,14 @@ path.exists(__dirname + '/package.json', function (exists) {
   if (exists) {
     fs.readFile(__dirname + '/package.json', 'utf8', function (err, data) {
       if (err !== null) console.log(err);
-      else version = JSON.parse(data)['version'];
+      else version = JSON.parse(data).version;
     });
   } else {
     path.exists(__dirname + '/../ircnode/package.json', function (exists) {
       if (exists) {
         fs.readFile(__dirname + '/../ircnode/package.json', 'utf8', function (err, data) {
           if (err !== null) console.log(err);
-          else version = JSON.parse(data)['version'];
+          else version = JSON.parse(data).version;
         });
       }
     });
