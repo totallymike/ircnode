@@ -46,7 +46,7 @@ irc.userLoop = setInterval(function () {
 irc.config  = JSON.parse(fs.readFileSync(config_file));
 irc.users   = JSON.parse(fs.readFileSync(user_file));
 
-irc.command_char = '!';
+irc.command_char = (process.env.IRC_NODE_PREFIX || irc.config.prefix || '!');
 irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
 
@@ -64,15 +64,14 @@ case "start":
       var daemon = require('daemon');
     } catch (err) {
       if (process.platform === 'win32') {
-        console.log('There is no daemon support for Windows. You can');
-        console.log('still use the bot without daemon by launching');
-        console.log('it with \'node client.js front\'.');
+        console.log('There is no daemon support for Windows.');
       } else {
         console.log('You do not have daemon.node available. Please');
-        console.log('follow the instructions on the Configuration');
-        console.log('wiki page for set-up. You can still launch the');
-        console.log('bot without daemon using \'node client.js front\'.');
+        console.log('run \'npm install daemon\' to install it to the');
+        console.log('working directory.');
       }
+      console.log('You can still launch the bot without daemon');
+      console.log('by simply launching it without any arguments.');
       process.exit(0);
       break;
     }
@@ -92,15 +91,14 @@ case "restart":
     var daemon = require('daemon');
   } catch (err) {
     if (process.platform === 'win32') {
-      console.log('There is no daemon support for Windows. You can');
-      console.log('still use the bot without daemon by launching');
-      console.log('it with \'node client.js front\'.');
+      console.log('There is no daemon support for Windows.');
     } else {
       console.log('You do not have daemon.node available. Please');
-      console.log('follow the instructions on the Configuration');
-      console.log('wiki page for set-up. You can still launch the');
-      console.log('bot without daemon using \'node client.js front\'.');
+      console.log('run \'npm install daemon\' to install it to the');
+      console.log('working directory.');
     }
+    console.log('You can still launch the bot without daemon');
+    console.log('by simply launching it without any arguments.');
     process.exit(0);
     break;
   }
@@ -118,6 +116,46 @@ case "stop":
   process.exit(0);
   break;
 }
+
+var version = '(unknown version)';
+path.exists(__dirname + '/.git/', function (exists) {
+  if (exists) {
+    var exec = require('child_process').exec;
+    exec("git log -n1 --format=%h",
+         function (err, stdout, stderr) {
+          version = 'commit ' + stdout;
+        }
+    );
+  } else {
+    path.exists(__dirname + '/package.json', function (exists) {
+      if (exists) {
+        fs.readFile(__dirname + '/package.json', 'utf8', function (err, data) {
+          if (err !== null) console.log(err);
+          else
+            try {
+              version = JSON.parse(data).version;
+            } catch (err) {
+              console.log(err);
+            }
+        });
+      } else {
+        path.exists(__dirname + '/../ircnode/package.json', function (exists) {
+          if (exists) {
+            fs.readFile(__dirname + '/../ircnode/package.json', 'utf8', function (err, data) {
+              if (err !== null) console.log(err);
+              else
+                try {
+                  version = JSON.parse(data).version;
+                } catch (err) {
+                  console.log(err);
+                }
+            });
+          }
+        });
+      }
+    });
+  }
+});
 
 irc.check_level = function (nick, level, callback) {
   if (typeof irc.users[nick] === 'undefined')
@@ -172,7 +210,7 @@ irc.splitcmd = function (data) {
   else
     action.source = action.channel;
 
-  params[3] = params[3].slice(2);
+  params[3] = params[3].slice(1 + irc.command_char.length);
 
   action.cmd = params[3];
   action.params = params.slice(4);
@@ -274,7 +312,7 @@ irc.emitter.on('PING', function (data) {
 irc.emitter.on('PRIVMSG', function (data) {
 
   // Look for first character of the message.
-  if (data[data.indexOf(':') + 1] === irc.command_char) {
+  if (data.substring(data.indexOf(':') + 1, data.indexOf(':') + 1 + irc.command_char.length) === irc.command_char) {
     var action = irc.splitcmd(data);
     if (irc.debug) console.log(action);
     irc.emitter.emit(action.cmd, action);
@@ -285,10 +323,15 @@ global.irc = irc;
 irc.plugins = [];
 fs.readdir(plugin_dir, function (err, files) {
   for (var i = 0, len = files.length; i < len; i += 1) {
-    var plugin = require(plugin_dir + files[i]);
-    plugin.enabled = true;
-    irc.plugins.push(plugin);
-    irc.emitter.on(plugin.name, plugin.handler);
+    var ppath = plugin_dir + files[i];
+    if (ppath.indexOf('.js', ppath.length - 3) === -1) {
+      console.log('Invalid plugin file: ' + files[i]);
+    } else {
+      var plugin = require(ppath);
+      plugin.enabled = true;
+      irc.plugins.push(plugin);
+      irc.emitter.on(plugin.name, plugin.handler);
+    }
   }
 });
 
@@ -380,3 +423,6 @@ irc.emitter.on('seen', function (act) {
               irc.users[nick].seen_channel);
 });
 
+irc.emitter.on('version', function (act) {
+  irc.privmsg(act.source, 'IRC Node ' + version);
+});
