@@ -4,7 +4,7 @@ var net       = require('net');
 var events    = require('events');
 var path      = require('path');
 
-var irc = {};
+var irc = module.exports = {};
 
 var config_path = (process.env.IRC_NODE_PATH ||
                    process.env[(process.platform === 'win32') ?
