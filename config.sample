@@ -4,5 +4,6 @@
   "nick":     "ircnode_bot",
   "user":     "ircnode_bot",
   "chan":     "#bots",
-  "realName": "Ircnode Bot"
+  "realName": "Ircnode Bot",
+  "prefix":   "!"
 }
