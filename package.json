@@ -9,6 +9,7 @@
   "name": "ircnode",
   "description": "Simple, extensible IRC bot",
   "version": "0.0.9",
+  "main"   : "client.js",
   "homepage": "http://github.com/totallymike/ircnode",
   "repository": {
     "type": "git",
