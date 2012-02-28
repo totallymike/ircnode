@@ -315,7 +315,7 @@ irc.emitter.on('PRIVMSG', function (data) {
   if (data.substring(data.indexOf(':') + 1, data.indexOf(':') + 1 + irc.command_char.length) === irc.command_char) {
     var action = irc.splitcmd(data);
     if (irc.debug) console.log(action);
-    irc.emitter.emit(action.cmd, action);
+    if (action.cmd !== 'PRIVMSG') irc.emitter.emit(action.cmd, action);
   }
 });
 
