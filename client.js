@@ -46,6 +46,8 @@ irc.userLoop = setInterval(function () {
 irc.config  = JSON.parse(fs.readFileSync(config_file));
 irc.users   = JSON.parse(fs.readFileSync(user_file));
 
+irc.reserved_words = ['PRIVMSG', 'PING', 'PART', 'JOIN', 'QUIT'];
+
 irc.command_char = (process.env.IRC_NODE_PREFIX || irc.config.prefix || '!');
 irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
@@ -312,10 +314,12 @@ irc.emitter.on('PING', function (data) {
 irc.emitter.on('PRIVMSG', function (data) {
 
   // Look for first character of the message.
-  if (data.substring(data.indexOf(':') + 1, data.indexOf(':') + 1 + irc.command_char.length) === irc.command_char) {
+  if (data.substring(data.indexOf(':') + 1, data.indexOf(':') + 1
+                     + irc.command_char.length) === irc.command_char) {
     var action = irc.splitcmd(data);
     if (irc.debug) console.log(action);
-    if (action.cmd !== 'PRIVMSG') irc.emitter.emit(action.cmd, action);
+    if (irc.reserved_words.indexOf(action.cmd) === -1)
+      irc.emitter.emit(action.cmd, action);
   }
 });
 
