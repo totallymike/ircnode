@@ -288,7 +288,7 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
         } else {
           irc.join(chan);
         }
-      }, waitTime * 1000);
+      }, waitTime);
     });
   });
 });
