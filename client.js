@@ -280,7 +280,7 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
         throw ("An admin must be configured in users.json!");
       }
       
-      setTimeout(function (){
+      setTimeout(function () {
         if (chan instanceof Array) {
           for (var i = 0, l = chan.length; i < l; i += 1) {
             irc.join(chan[i]);
@@ -288,7 +288,7 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
         } else {
           irc.join(chan);
         }
-      }, waitTime*1000);
+      }, waitTime * 1000);
     });
   });
 });
