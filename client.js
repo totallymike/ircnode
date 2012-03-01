@@ -265,6 +265,7 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
   var user      = irc.config.user;
   var realName  = irc.config.realName;
   var chan      = irc.config.chan;
+  var waitTime  = irc.config.waitTime;
 
   irc.nick(nick, function () {
     irc.user(user, '8', realName, function () {
@@ -279,13 +280,15 @@ irc._socket = net.connect(irc.config.port, irc.config.address, function () {
         throw ("An admin must be configured in users.json!");
       }
       
-      if (chan instanceof Array) {
-        for (var i = 0, l = chan.length; i < l; i += 1) {
-          irc.join(chan[i]);
+      setTimeout(function (){
+        if (chan instanceof Array) {
+          for (var i = 0, l = chan.length; i < l; i += 1) {
+            irc.join(chan[i]);
+          }
+        } else {
+          irc.join(chan);
         }
-      } else {
-        irc.join(chan);
-      }
+      }, waitTime*1000);
     });
   });
 });
