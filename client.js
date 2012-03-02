@@ -166,17 +166,20 @@ irc.check_level = function (nick, level, callback) {
     callback(false);
   else if (irc.auth_levels.indexOf(level) !== -1) {
     var listener = function (data) {
-      var params = data.split(' ').slice(4);
+      var params = data.split(' ').slice(3);
+      params[0] = params[0].slice(1, params[0].length);
       var source = data.slice(0, data.indexOf('!'));
       if (params.length < 2) return;
       if (source !== 'NickServ') return;
-      if (params[params.length - 2] === nick) {
-        irc.emitter.removeListener('NOTICE', listener);
-        if (params[params.length - 1] === '3')
-          callback(true);
-        else
-          callback(false);
-      }
+      for (var i = 0; i < params.length; i++)
+        if (params[i] === nick) {
+          irc.emitter.removeListener('NOTICE', listener);
+          if (params[params.length - 1] === '3')
+            callback(true);
+          else
+            callback(false);
+          break;
+        }
     };
     irc.emitter.on('NOTICE', listener);
     irc.privmsg('NickServ', 'ACC ' + nick);
