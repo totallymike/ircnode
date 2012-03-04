@@ -3,6 +3,7 @@ var fs        = require('fs');
 var net       = require('net');
 var events    = require('events');
 var path      = require('path');
+var https     = require('https');
 
 var irc = module.exports = {};
 
@@ -51,6 +52,66 @@ irc.reserved_words = ['PRIVMSG', 'PING', 'PART', 'JOIN', 'QUIT'];
 irc.command_char = (process.env.IRC_NODE_PREFIX || irc.config.prefix || '!');
 irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
+
+var filesLeft = 0;
+
+var getLatestTree = function (callback) {
+  https.get({
+    host: 'api.github.com',
+    path: '/repos/totallymike/ircnode_plugins/commits',
+    method: 'GET'
+  }, function (res) {
+    var responseData = "";
+    res.setEncoding('utf8');
+
+    res.on('data', function (chunk) {
+      responseData += chunk;
+    });
+
+    res.on('end', function () {
+      https.get({
+        host: 'api.github.com',
+        path: '/repos/totallymike/ircnode_plugins/git/trees/' + JSON.parse(responseData)[0].commit.tree.sha,
+        method: 'GET'
+      }, function (res) {
+        var responseData = "";
+        res.setEncoding('utf8');
+
+        res.on('data', function (chunk) {
+          responseData += chunk;
+        });
+        res.on('end', function () {
+          callback(JSON.parse(responseData));
+        });
+      });
+    });
+  });
+};
+
+var saveBlob = function (filename, sha, msg) {
+  https.get({
+    host: 'api.github.com',
+    path: '/repos/totallymike/ircnode_plugins/git/blobs/' + sha,
+    method: 'GET'
+  }, function (res) {
+    var responseData = "";
+    res.setEncoding('utf8');
+
+    res.on('data', function (chunk) {
+      responseData += chunk;
+    });
+    res.on('end', function () {
+      var jsonRes = JSON.parse(responseData);
+      var content = jsonRes.content;
+      if (jsonRes.encoding === 'base64')
+        content = new Buffer(jsonRes.content, 'base64').toString('utf8');
+
+      fs.writeFileSync(plugin_dir + filename, content, 'utf8');
+      console.log(msg + ': ' + filename.substring(0, filename.length - 3));
+      filesLeft--;
+    });
+  });
+};
 
 var args = process.argv;
 var dPID;
@@ -117,6 +178,120 @@ case "stop":
   }
   process.exit(0);
   break;
+
+case "uninstall":
+  if (args.length <= 3) {
+    console.log('USAGE: uninstall PLUGIN_NAME');
+    process.exit(0);
+    return;
+  }
+  var deletePlugin = function (name) {
+    var plugin = plugin_dir + name + '.js';
+    if (!path.existsSync(plugin)) {
+      console.log('No such plugin: ' + name);
+    } else {
+      fs.unlinkSync(plugin);
+      console.log('Plugin uninstalled: ' + name);
+    }
+  };
+  for (var a = 3; a < args.length; a++)
+    deletePlugin(args[a]);
+  process.exit(0);
+  return;
+
+case "update":
+  if (args.length <= 3) {
+    console.log('USAGE: update PLUGIN_NAME');
+    process.exit(0);
+    return;
+  }
+  getLatestTree(function (jsonData) {
+    for (var a = 3; a < args.length; a++) {
+      for (var i in jsonData.tree) {
+        if (jsonData.tree[i].type === 'blob') {
+          var plugin = jsonData.tree[i].path;
+          if (plugin === args[a] + '.js') {
+            filesLeft++;
+            saveBlob(plugin, jsonData.tree[i].sha, 'Plugin updated');
+          }
+        }
+      }
+    }
+    setInterval(function () {
+      if (filesLeft === 0)
+        process.exit(0);
+    }, 500);
+  });
+  return;
+
+case "update-all":
+  getLatestTree(function (jsonData) {
+    for (var i in jsonData.tree) {
+      if (jsonData.tree[i].type === 'blob') {
+        var plugin = jsonData.tree[i].path;
+        if (plugin.substring(plugin.length - 3, plugin.length) === '.js') {
+          filesLeft++;
+          saveBlob(plugin, jsonData.tree[i].sha, 'Plugin updated');
+        }
+      }
+    }
+    setInterval(function () {
+      if (filesLeft === 0)
+        process.exit(0);
+    }, 500);
+  });
+  return;
+
+case "install":
+  if (args.length <= 3) {
+    console.log('USAGE: install PLUGIN_NAME');
+    process.exit(0);
+    return;
+  }
+  getLatestTree(function (jsonData) {
+    for (var a = 3; a < args.length; a++) {
+      for (var i in jsonData.tree) {
+        if (jsonData.tree[i].type === 'blob') {
+          var plugin = jsonData.tree[i].path;
+          if (plugin === args[a] + '.js') {
+            if (path.existsSync(plugin_dir + plugin)) {
+              console.log('Plugin already installed: ' + args[a] + ' (\'update ' + args[a] + '\' to reinstall)');
+            } else {
+              filesLeft++;
+              saveBlob(plugin, jsonData.tree[i].sha, 'Plugin installed');
+            }
+          }
+        }
+      }
+    }
+    setInterval(function () {
+      if (filesLeft === 0)
+        process.exit(0);
+    }, 500);
+  });
+  return;
+
+case "install-all":
+  getLatestTree(function (jsonData) {
+    for (var i in jsonData.tree) {
+      if (jsonData.tree[i].type === 'blob') {
+        var plugin = jsonData.tree[i].path;
+        if (plugin.substring(plugin.length - 3, plugin.length) === '.js') {
+          if (path.existsSync(plugin_dir + plugin)) {
+            console.log('Plugin already installed: ' + args[a] + ' (\'update ' + args[a] + '\' to reinstall)');
+          } else {
+            filesLeft++;
+            saveBlob(plugin, jsonData.tree[i].sha, 'Plugin installed');
+          }
+        }
+      }
+    }
+    setInterval(function () {
+      if (filesLeft === 0)
+        process.exit(0);
+    }, 500);
+  });
+  return;
 }
 
 var version = '(unknown version)';
