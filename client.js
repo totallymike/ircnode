@@ -264,12 +264,15 @@ irc.quit = function (msg, callback) {
 };
 
 irc._socket = net.connect(irc.config.port, irc.config.address, function () {
+  var password  = irc.config.password;
   var nick      = irc.config.nick;
   var user      = irc.config.user;
   var realName  = irc.config.realName;
   var chan      = irc.config.chan;
   var waitTime  = irc.config.waitTime;
 
+  if (password !== '')
+    irc.act({action: 'PASS', params: [password]}, function () {});
   irc.nick(nick, function () {
     irc.user(user, '8', realName, function () {
       var has_admin = false;
