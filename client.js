@@ -428,9 +428,11 @@ irc.emitter.on('seen', function (act) {
     irc.privmsg(act.source, 'Unknown nick: ' + nick);
     return (1);
   }
+  var msg = irc.users[nick].seen_msg;
+  if (msg.substring(0, 7) === '\u0001ACTION')
+      msg = '***' + nick + msg.substring(7, msg.length - 1);
   irc.privmsg(act.source, nick + ' last seen: ' + irc.users[nick].seen_time +
-              " saying '" + irc.users[nick].seen_msg + "' in " +
-              irc.users[nick].seen_channel);
+              " saying '" + msg + "' in " + irc.users[nick].seen_channel);
 });
 
 irc.emitter.on('version', function (act) {
