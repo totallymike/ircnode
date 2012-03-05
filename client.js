@@ -454,7 +454,7 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
       var new_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
       know_dict = new_dict;
     } catch (err) {
-      console.log('WARNING: Unable to update the know dictionary. Error: ' + err.message);
+      console.log('WARNING: Unable to update the "know" dictionary. Error: ' + err.message);
     }
   }, 20000);
 
@@ -540,8 +540,20 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
         output += '\'' + parsePhrase(valuer2) + '\', ';
     if (output === 'Responses known to: ')
       irc.privmsg(act.source, 'No known responses.');
-    else
-      irc.privmsg(act.source, output.substring(0, output.length - 2));
+    else {
+      output = output.substring(0, output.length - 2);
+      if (output.length > 400) {
+        var cuts = 0;
+        while (output.length > 390) {
+          var outArr = output.split(', ');
+          outArr.splice(outArr.length - 1, 1);
+          output = outArr.join(', ');
+          cuts++;
+        }
+        output += ' and ' + cuts + ' more';
+      }
+      irc.privmsg(act.source, output);
+    }
   });
 }
 
