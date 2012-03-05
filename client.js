@@ -200,9 +200,9 @@ irc.is_owner = function (nick, callback) {
 };
 
 
-irc._wrapMessage = function(target, msg) {
+irc._wrapMessage = function (target, msg) {
   return 'PRIVMSG ' + target + ' :' + msg + '\r\n';
-}
+};
 
 irc.privmsg  = function (target, msg) {
   irc.send(irc._wrapMessage(target, msg));
@@ -247,7 +247,7 @@ irc._wrapAction = function (options) {
 
 irc.act = function act(options, callback) {
   irc.send(irc._wrapAction(options), callback);
-}
+};
 
 irc.join = function (channel, callback) {
   irc.act({action: 'JOIN', params: [channel]}, callback);
@@ -270,25 +270,14 @@ irc.quit = function (msg, callback) {
   irc.act({action: 'QUIT', params: [msg]}, function () {
     if (path.existsSync(lock_file))
       fs.unlinkSync(lock_file);
-    if (debug) console.log('Quitting . . .');
+    if (irc.debug) console.log('Quitting . . .');
     callback();
     process.exit(0);
   });
 };
 
-/* Sequential callbacks, pulled out for readability. */
-/* The sequence is started in irc.connect */
-function sendNick() {
-  var nick      = irc.config.nick;
-  irc.nick(nick, sendUser)
-}
-
-function sendUser() {
-  var user      = irc.config.user;
-  var realName  = irc.config.realName;
-  irc.user(user, '8', realName, initChans)
-}
-
+/* Sequential callbacks, pulled out for readability.
+ * The sequence is started in irc.connect */
 function initChans() {
   var has_admin = false;
   for (var u in irc.users) {
@@ -300,7 +289,8 @@ function initChans() {
   if (!has_admin) {
     throw ("An admin must be configured in users.json!");
   }
-  
+
+  var chan = irc.config.chan;
   if (chan instanceof Array) {
     for (var i = 0, l = chan.length; i < l; i += 1) {
       irc.join(chan[i]);
@@ -308,6 +298,17 @@ function initChans() {
   } else {
     irc.join(chan);
   }
+}
+
+function sendUser() {
+  var user = irc.config.user;
+  var realName = irc.config.realName;
+  irc.user(user, '8', realName, initChans);
+}
+
+function sendNick() {
+  var nick = irc.config.nick;
+  irc.nick(nick, sendUser);
 }
 /* End sequential callbacks */
 
@@ -321,7 +322,7 @@ irc.connect = function connect(args) {
 
   // Here begins the sequence ;)
   irc._socket.connect(irc.config.port, irc.config.address, sendNick);
-}
+};
 
 irc._socket.on('data', function onData(data) {
   data = data.toString();
@@ -344,7 +345,7 @@ irc._pongHandler = function pongHandler(data) {
   // We only wrap pongs, write them to the socket for testing.
   var address = data.slice(data.indexOf(':') + 1);
   return irc._wrapAction({action: 'PONG', longParam: address});
-}
+};
 
 irc.emitter.on('PING', function (data) {
   irc.send(irc._pongHandler(data));
