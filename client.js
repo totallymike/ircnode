@@ -53,12 +53,13 @@ irc.command_char = (process.env.IRC_NODE_PREFIX || irc.config.prefix || '!');
 irc.debug = process.env.IRC_NODE_DEBUG !== 'false';
 irc.emitter = new events.EventEmitter();
 
+var pluginRepo = (process.env.IRC_NODE_PLUGIN_REPO || 'totallymike/ircnode_plugins');
 var filesLeft = 0;
 
 var getLatestTree = function (callback) {
   https.get({
     host: 'api.github.com',
-    path: '/repos/totallymike/ircnode_plugins/commits',
+    path: '/repos/' + pluginRepo + '/commits',
     method: 'GET'
   }, function (res) {
     var responseData = "";
@@ -71,7 +72,7 @@ var getLatestTree = function (callback) {
     res.on('end', function () {
       https.get({
         host: 'api.github.com',
-        path: '/repos/totallymike/ircnode_plugins/git/trees/' + JSON.parse(responseData)[0].commit.tree.sha,
+        path: '/repos/' + pluginRepo + '/git/trees/' + JSON.parse(responseData)[0].commit.tree.sha,
         method: 'GET'
       }, function (res) {
         var responseData = "";
@@ -91,7 +92,7 @@ var getLatestTree = function (callback) {
 var saveBlob = function (filename, sha, msg) {
   https.get({
     host: 'api.github.com',
-    path: '/repos/totallymike/ircnode_plugins/git/blobs/' + sha,
+    path: '/repos/' + pluginRepo + '/git/blobs/' + sha,
     method: 'GET'
   }, function (res) {
     var responseData = "";
