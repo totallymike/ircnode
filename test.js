@@ -1,23 +1,28 @@
-#!/usr/bin/env node
-var irc    = require('./client');
-var net    = require('net');
-var assert = require('assert');
+var irc = require('./client'),
+    net = require('net'),
+    assert = require('assert');
 
-// Tests how responses to PING are created.
-assert.strictEqual(irc._pongHandler('PING :burgle'), 'PONG :burgle\r\n');
+assert.equal(irc._pongHandler('PING :burgle'), 'PONG :burgle\r\n');
 
-// Tests how incomming messages are parsed.
-var res = {
-  "nick": "irc",
-  "user": "ircnode",
-  "host": "localhost",
-  "channel": "#bots",
-  "source": "#bots",
-  "cmd": "test",
-  "params": [ "param", "param2" ],
-  "data": "irc!ircnode@localhost PRIVMSG #bots :!test param param2"
+
+var splitTests = {
+  'mike!michael@localhost PRIVMSG #test :!test action': {
+    'nick': 'mike',
+    'source': '#test',
+    'user': 'michael',
+    'host': 'localhost',
+    'channel': '#test',
+    'cmd': 'test',
+    'params':  ['action'],
+    'data': 'mike!michael@localhost PRIVMSG #test :!test action'
+  }
 };
-assert.deepEqual(irc.splitcmd('irc!ircnode@localhost PRIVMSG #bots :!test param param2'), res);
+
+for (var u in splitTests) {
+  var actual = irc.splitcmd(u);
+  var expected = splitTests[u];
+
+  assert.deepEqual(actual, expected);
+}
 
 process.exit(0);
-
