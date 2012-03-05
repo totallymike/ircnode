@@ -7,7 +7,6 @@ var assert = require('assert');
 assert.strictEqual(irc._pongHandler('PING :burgle'), 'PONG :burgle\r\n');
 
 // Tests how incomming messages are parsed.
-var act = irc.splitcmd('irc!ircnode@localhost PRIVMSG #bots :!test param param2');
 var res = {
   "nick": "irc",
   "user": "ircnode",
@@ -18,12 +17,7 @@ var res = {
   "params": [ "param", "param2" ],
   "data": "irc!ircnode@localhost PRIVMSG #bots :!test param param2"
 };
-for (var value in act)
-  if (act[value] instanceof Array) {
-    for (var sub in act[value])
-      assert.strictEqual(act[value][sub], res[value][sub]);
-  } else
-    assert.strictEqual(act[value], res[value]);
+assert.deepEqual(irc.splitcmd('irc!ircnode@localhost PRIVMSG #bots :!test param param2'), res);
 
 process.exit(0);
 
