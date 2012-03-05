@@ -441,16 +441,21 @@ irc.emitter.on('version', function (act) {
 });
 
 if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
-  var containsPhrase = function (msg, phrase) {
+  var parsePhrase = function (phrase) {
     phrase = phrase.replace(/%nick/gi, irc.config.nick);
-    return msg.indexOf(phrase) !== -1;
+    return phrase;
   };
 
   if (!path.existsSync(config_path + '/know.json'))
     fs.writeFileSync(config_path + '/know.json', '{ "action": { }, "regular": { } }', 'utf8');
   var know_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
   setInterval(function () {
-    know_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
+    try {
+      var new_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
+      know_dict = new_dict;
+    } catch (err) {
+      console.log('WARNING: Unable to update the know dictionary. Error: ' + err.message);
+    }
   }, 20000);
 
   irc.emitter.on('PRIVMSG', function (data) {
@@ -463,12 +468,12 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
         msg.substring(msg.length - 1, msg.length) === '\u0001') {
       msg = msg.substring(8, msg.length - 1);
       for (var valuea1 in know_dict.action)
-        if (containsPhrase(msg, valuea1))
+        if (msg.indexOf(parsePhrase(valuea1)) !== -1)
           irc.privmsg(source, know_dict.action[valuea1].response);
     } else if (msg.substring(0, irc.command_char.length + 6) !== irc.command_char + 'forget' &&
         msg.substring(0, irc.command_char.length + 5) !== irc.command_char + 'learn')
       for (var valuer1 in know_dict.regular)
-        if (containsPhrase(msg, valuer1))
+        if (msg.indexOf(parsePhrase(valuer1)) !== -1)
           irc.privmsg(source, know_dict.regular[valuer1].response);
   });
 
@@ -529,10 +534,10 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
     var output = 'Responses known to: ';
     for (var valuea2 in know_dict.action)
       if (know_dict.action[valuea2].hidden !== 'true')
-        output += '\'/me ' + valuea2 + '\', ';
+        output += '\'/me ' + parsePhrase(valuea2) + '\', ';
     for (var valuer2 in know_dict.regular)
       if (know_dict.regular[valuer2].hidden !== 'true')
-        output += '\'' + valuer2 + '\', ';
+        output += '\'' + parsePhrase(valuer2) + '\', ';
     if (output === 'Responses known to: ')
       irc.privmsg(act.source, 'No known responses.');
     else
