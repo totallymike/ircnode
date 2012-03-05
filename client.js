@@ -439,3 +439,99 @@ irc.emitter.on('seen', function (act) {
 irc.emitter.on('version', function (act) {
   irc.privmsg(act.source, 'IRC Node ' + version);
 });
+
+if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
+  if (!path.existsSync(config_path + '/know.json'))
+    fs.writeFileSync(config_path + '/know.json', '{ "action": { }, "regular": { } }', 'utf8');
+  var know_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
+  setInterval(function () {
+    know_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
+  }, 20000);
+
+  irc.emitter.on('PRIVMSG', function (data) {
+    var msg = data.slice(data.indexOf(':') + 1).toLowerCase();
+    var source = data.split(' ')[2];
+    if (source === irc.config.nick)
+      source = data.slice(0, data.indexOf('!'));
+
+    if (data.slice(data.indexOf(':') + 1).substring(0, 7) === '\u0001ACTION' &&
+        msg.substring(msg.length - 1, msg.length) === '\u0001') {
+      msg = msg.substring(8, msg.length - 1);
+      for (var valuea1 in know_dict.action)
+        if (msg.indexOf(valuea1) !== -1)
+          irc.privmsg(source, know_dict.action[valuea1].response);
+    } else if (msg.substring(0, irc.command_char.length + 6) !== irc.command_char + 'forget' &&
+        msg.substring(0, irc.command_char.length + 5) !== irc.command_char + 'learn')
+      for (var valuer1 in know_dict.regular)
+        if (msg.indexOf(valuer1) !== -1)
+          irc.privmsg(source, know_dict.regular[valuer1].response);
+  });
+
+  irc.emitter.on('learn', function (act) {
+    irc.check_level(act.nick, 'admin', function (is_admin) {
+      if (is_admin) {
+        var input = act.params.join(' ').split('"');
+        if (input.length < 5)
+          irc.privmsg(act.source, 'Usage: ' + irc.command_char + 'learn "LISTENER" "RESPONSE"');
+        else {
+          var listener = input[1];
+          var response = input[3];
+          if (listener === '')
+            irc.privmsg(act.source, 'Unable to add an empty listener.');
+          else if (response === '')
+            irc.privmsg(act.source, 'Unable to add an empty response.');
+          else {
+            if (listener.substring(0, 4) === '/me ') {
+              know_dict.action[listener.substring(4, listener.length).toLowerCase()] = { "response": response, "hidden": "false" };
+              irc.privmsg(act.source, 'Added the "' + listener +  '" listener.');
+              fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
+            } else {
+              know_dict.regular[listener.toLowerCase()] = { "response": response, "hidden": "false" };
+              irc.privmsg(act.source, 'Added the "' + listener + '" listener.');
+              fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
+            }
+          }
+        }
+      } else
+        irc.privmsg(act.source, 'Not authorized to modify responses.');
+    });
+  });
+
+  irc.emitter.on('forget', function (act) {
+    irc.check_level(act.nick, 'admin', function (is_admin) {
+      if (is_admin) {
+        var listener = act.params.join(' ');
+        if (listener === '')
+          irc.privmsg(act.source, 'USAGE: ' + irc.command_char + 'forget LISTENER');
+        else {
+          if (listener.substring(0, 4) === '/me ' && know_dict.action[listener.substring(4, listener.length).toLowerCase()] !== undefined) {
+            delete know_dict.action[listener.substring(4, listener.length).toLowerCase()];
+            irc.privmsg(act.source, 'Deleted the "' + listener +  '" listener.');
+            fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
+          } else if (know_dict.regular[listener.toLowerCase()] !== undefined) {
+            delete know_dict.regular[listener.toLowerCase()];
+            irc.privmsg(act.source, 'Deleted the "' + listener + '" listener.');
+            fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
+          } else
+            irc.privmsg(act.source, 'Could not find the "' + listener + '" listener.');
+        }
+      } else
+        irc.privmsg(act.source, 'Not authorized to modify responses.');
+    });
+  });
+
+  irc.emitter.on('know', function (act) {
+    var output = 'Responses known to: ';
+    for (var valuea2 in know_dict.action)
+      if (know_dict.action[valuea2].hidden !== 'true')
+        output += '\'/me ' + valuea2 + '\', ';
+    for (var valuer2 in know_dict.regular)
+      if (know_dict.regular[valuer2].hidden !== 'true')
+        output += '\'' + valuer2 + '\', ';
+    if (output === 'Responses known to: ')
+      irc.privmsg(act.source, 'No known responses.');
+    else
+      irc.privmsg(act.source, output.substring(0, output.length - 2));
+  });
+}
+
