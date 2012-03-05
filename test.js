@@ -5,7 +5,7 @@ var irc = require('./client'),
 assert.equal(irc._pongHandler('PING :burgle'), 'PONG :burgle\r\n');
 
 assert.equal(
-  irc.splitcmd('mike!michael@localhost #test :!test action'), 
+  irc.splitcmd('mike!michael@localhost PRIVMSG #test :!test action'), 
   {
     'nick': 'mike',
     'source': 'test',
