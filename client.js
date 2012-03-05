@@ -441,6 +441,11 @@ irc.emitter.on('version', function (act) {
 });
 
 if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
+  var containsPhrase = function (msg, phrase) {
+    phrase = phrase.replace(/%nick/gi, irc.config.nick);
+    return msg.indexOf(phrase) !== -1;
+  };
+
   if (!path.existsSync(config_path + '/know.json'))
     fs.writeFileSync(config_path + '/know.json', '{ "action": { }, "regular": { } }', 'utf8');
   var know_dict = JSON.parse(fs.readFileSync(config_path + '/know.json', 'utf8'));
@@ -458,12 +463,12 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
         msg.substring(msg.length - 1, msg.length) === '\u0001') {
       msg = msg.substring(8, msg.length - 1);
       for (var valuea1 in know_dict.action)
-        if (msg.indexOf(valuea1) !== -1)
+        if (containsPhrase(msg, valuea1))
           irc.privmsg(source, know_dict.action[valuea1].response);
     } else if (msg.substring(0, irc.command_char.length + 6) !== irc.command_char + 'forget' &&
         msg.substring(0, irc.command_char.length + 5) !== irc.command_char + 'learn')
       for (var valuer1 in know_dict.regular)
-        if (msg.indexOf(valuer1) !== -1)
+        if (containsPhrase(msg, valuer1))
           irc.privmsg(source, know_dict.regular[valuer1].response);
   });
 
