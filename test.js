@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var irc = require('./client'),
     net = require('net'),
     assert = require('assert');
