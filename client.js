@@ -443,7 +443,7 @@ irc.emitter.on('version', function (act) {
 if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
   var parsePhrase = function (phrase) {
     phrase = phrase.replace(/%nick/gi, irc.config.nick);
-    return phrase;
+    return phrase.toLowerCase();
   };
 
   if (!path.existsSync(config_path + '/know.json'))
