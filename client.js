@@ -6,7 +6,9 @@ var path      = require('path');
 
 var irc = module.exports = {};
 irc._socket = new net.Socket({'type': 'tcp4'});
-irc.send = irc._socket.write;
+irc.send = function (content, callback) {
+  irc._socket.write(content, callback);
+};
 
 var config_path = (process.env.IRC_NODE_PATH ||
                    process.env[(process.platform === 'win32') ?
