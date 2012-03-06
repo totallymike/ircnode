@@ -555,28 +555,28 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
       if (is_admin) {
         var input = act.params.join(' ').split('"');
         if (input.length < 5)
-          irc.privmsg(act.source, 'Usage: ' + irc.command_char + 'learn "LISTENER" "RESPONSE"');
+          irc.privmsg(act.nick, 'USAGE: ' + irc.command_char + 'learn "LISTENER" "RESPONSE"');
         else {
           var listener = input[1];
           var response = input[3];
           if (listener === '')
-            irc.privmsg(act.source, 'Unable to add an empty listener.');
+            irc.privmsg(act.nick, 'Unable to add an empty listener.');
           else if (response === '')
-            irc.privmsg(act.source, 'Unable to add an empty response.');
+            irc.privmsg(act.nick, 'Unable to add an empty response.');
           else {
             if (listener.substring(0, 4) === '/me ') {
               know_dict.action[listener.substring(4, listener.length).toLowerCase()] = { "response": response, "hidden": "false" };
-              irc.privmsg(act.source, 'Added the "' + parsePhrase(listener) +  '" listener.');
+              irc.privmsg(act.nick, 'Added the "' + parsePhrase(listener) +  '" listener.');
               fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
             } else {
               know_dict.regular[listener.toLowerCase()] = { "response": response, "hidden": "false" };
-              irc.privmsg(act.source, 'Added the "' + parsePhrase(listener) + '" listener.');
+              irc.privmsg(act.nick, 'Added the "' + parsePhrase(listener) + '" listener.');
               fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
             }
           }
         }
       } else
-        irc.privmsg(act.source, 'Not authorized to modify responses.');
+        irc.privmsg(act.nick, 'Not authorized to modify responses.');
     });
   });
 
@@ -585,21 +585,21 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
       if (is_admin) {
         var listener = act.params.join(' ');
         if (listener === '')
-          irc.privmsg(act.source, 'USAGE: ' + irc.command_char + 'forget LISTENER');
+          irc.privmsg(act.nick, 'USAGE: ' + irc.command_char + 'forget LISTENER');
         else {
           if (listener.substring(0, 4) === '/me ' && know_dict.action[listener.substring(4, listener.length).toLowerCase()] !== undefined) {
             delete know_dict.action[listener.substring(4, listener.length).toLowerCase()];
-            irc.privmsg(act.source, 'Deleted the "' + parsePhrase(listener) +  '" listener.');
+            irc.privmsg(act.nick, 'Deleted the "' + parsePhrase(listener) +  '" listener.');
             fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
           } else if (know_dict.regular[listener.toLowerCase()] !== undefined) {
             delete know_dict.regular[listener.toLowerCase()];
-            irc.privmsg(act.source, 'Deleted the "' + parsePhrase(listener) + '" listener.');
+            irc.privmsg(act.nick, 'Deleted the "' + parsePhrase(listener) + '" listener.');
             fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
           } else
-            irc.privmsg(act.source, 'Could not find the "' + parsePhrase(listener) + '" listener.');
+            irc.privmsg(act.nick, 'Could not find the "' + parsePhrase(listener) + '" listener.');
         }
       } else
-        irc.privmsg(act.source, 'Not authorized to modify responses.');
+        irc.privmsg(act.nick, 'Not authorized to modify responses.');
     });
   });
 
@@ -612,7 +612,7 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
       if (know_dict.regular[valuer2].hidden !== 'true')
         output[0] += '\'' + parsePhrase(valuer2) + '\', ';
     if (output[0] === 'Responses known to: ')
-      irc.privmsg(act.source, 'No known responses.');
+      irc.privmsg(act.nick, 'No known responses.');
     else {
       var loop = true;
       while (loop) {
@@ -626,14 +626,21 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
               output[parseInt(i, 10) + 1] = outArr.splice(outArr.length - 1, 1) + ', ' + output[parseInt(i, 10) + 1];
               output[i] = outArr.join(', ');
             }
-            output[parseInt(i, 10) + 1] = '...' + output[parseInt(i, 10) + 1].slice(0, -2);
+            output[parseInt(i, 10) + 1] = '...' + output[parseInt(i, 10) + 1].slice(0, -4);
             output[i] += '...';
             loop = true;
           }
         }
       }
-      for (var i2 = 0; i2 < output.length && i2 < 3; i2++)
-        irc.privmsg(act.source, output[i2]);
+      irc.privmsg(act.nick, output[0]);
+      var crntMsg = 0;
+      var interid = setInterval(function () {
+        crntMsg++;
+        if (crntMsg < output.length)
+          irc.privmsg(act.nick, output[crntMsg]);
+        else
+          clearInterval(interid);
+      }, 3000);
     }
   });
 }
