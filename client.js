@@ -490,7 +490,30 @@ irc.emitter.on('version', function (act) {
 if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
   var parsePhrase = function (phrase) {
     phrase = phrase.replace(/%nick/gi, irc.config.nick);
+    phrase = phrase.replace(/%re/gi, '');
     return phrase.toLowerCase();
+  };
+
+  var msgContainsPhrase = function (msg, phrase) {
+    phrase = phrase.replace(/%nick/gi, irc.config.nick);
+    if (phrase.indexOf('%re') !== -1) {
+      var passCheck = true;
+      while (phrase.indexOf('%re') !== -1) {
+        var phrase1 = phrase.slice(0, phrase.indexOf('%re'));
+        var phrasex = phrase.slice(phrase.indexOf('%re') + 3);
+        var phrasere = phrasex.slice(0, phrasex.indexOf('%re'));
+        var phrase2 = phrasex.slice(phrasex.indexOf('%re') + 3);
+        var regexp = phrasere.split('/').length > 1 ? new RegExp(phrasere.split('/')[1], phrasere.split('/')[2]) : new RegExp(phrasere);
+        phrase = phrase1 + phrase2;
+        if (msg.indexOf(phrase1) === -1 || msg.indexOf(phrase2) === -1 || msg.search(regexp) === -1) {
+          passCheck = false;
+          break;
+        }
+      }
+      return passCheck;
+    } else {
+      return msg.indexOf(phrase.toLowerCase()) !== -1;
+    }
   };
 
   if (!path.existsSync(config_path + '/know.json'))
@@ -515,12 +538,12 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
         msg.substring(msg.length - 1, msg.length) === '\u0001') {
       msg = msg.substring(8, msg.length - 1);
       for (var valuea1 in know_dict.action)
-        if (msg.indexOf(parsePhrase(valuea1)) !== -1)
+        if (msgContainsPhrase(msg, valuea1))
           irc.privmsg(source, know_dict.action[valuea1].response);
     } else if (msg.substring(0, irc.command_char.length + 6) !== irc.command_char + 'forget' &&
         msg.substring(0, irc.command_char.length + 5) !== irc.command_char + 'learn')
       for (var valuer1 in know_dict.regular)
-        if (msg.indexOf(parsePhrase(valuer1)) !== -1)
+        if (msgContainsPhrase(msg, valuer1))
           irc.privmsg(source, know_dict.regular[valuer1].response);
   });
 
@@ -540,11 +563,11 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
           else {
             if (listener.substring(0, 4) === '/me ') {
               know_dict.action[listener.substring(4, listener.length).toLowerCase()] = { "response": response, "hidden": "false" };
-              irc.privmsg(act.source, 'Added the "' + listener +  '" listener.');
+              irc.privmsg(act.source, 'Added the "' + parsePhrase(listener) +  '" listener.');
               fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
             } else {
               know_dict.regular[listener.toLowerCase()] = { "response": response, "hidden": "false" };
-              irc.privmsg(act.source, 'Added the "' + listener + '" listener.');
+              irc.privmsg(act.source, 'Added the "' + parsePhrase(listener) + '" listener.');
               fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
             }
           }
@@ -563,14 +586,14 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
         else {
           if (listener.substring(0, 4) === '/me ' && know_dict.action[listener.substring(4, listener.length).toLowerCase()] !== undefined) {
             delete know_dict.action[listener.substring(4, listener.length).toLowerCase()];
-            irc.privmsg(act.source, 'Deleted the "' + listener +  '" listener.');
+            irc.privmsg(act.source, 'Deleted the "' + parsePhrase(listener) +  '" listener.');
             fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
           } else if (know_dict.regular[listener.toLowerCase()] !== undefined) {
             delete know_dict.regular[listener.toLowerCase()];
-            irc.privmsg(act.source, 'Deleted the "' + listener + '" listener.');
+            irc.privmsg(act.source, 'Deleted the "' + parsePhrase(listener) + '" listener.');
             fs.writeFile(config_path + '/know.json', JSON.stringify(know_dict, null, 2), 'utf8');
           } else
-            irc.privmsg(act.source, 'Could not find the "' + listener + '" listener.');
+            irc.privmsg(act.source, 'Could not find the "' + parsePhrase(listener) + '" listener.');
         }
       } else
         irc.privmsg(act.source, 'Not authorized to modify responses.');
