@@ -497,20 +497,23 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
   var msgContainsPhrase = function (msg, phrase) {
     phrase = phrase.replace(/%nick/gi, irc.config.nick);
     if (phrase.indexOf('%re') !== -1) {
-      var passCheck = true;
       while (phrase.indexOf('%re') !== -1) {
         var phrase1 = phrase.slice(0, phrase.indexOf('%re'));
         var phrasex = phrase.slice(phrase.indexOf('%re') + 3);
         var phrasere = phrasex.slice(0, phrasex.indexOf('%re'));
         var phrase2 = phrasex.slice(phrasex.indexOf('%re') + 3);
-        var regexp = phrasere.split('/').length > 1 ? new RegExp(phrasere.split('/')[1], phrasere.split('/')[2]) : new RegExp(phrasere);
-        phrase = phrase1 + phrase2;
-        if (msg.indexOf(phrase1) === -1 || msg.indexOf(phrase2) === -1 || msg.search(regexp) === -1) {
-          passCheck = false;
-          break;
+        try {
+          var regexp = (phrasere.split('/').length > 1) ? (new RegExp(phrasere.split('/')[1], phrasere.split('/')[2])) : (new RegExp(phrasere, 'i'));
+          phrase = phrase1 + phrase2;
+          if (msg.indexOf(phrase1.trim()) === -1 || msg.indexOf(phrase2.trim()) === -1 || msg.search(regexp) === -1) {
+            return false;
+          }
+        } catch (err) {
+          console.log('WARNING: Unable to parse \'' + phrasere + '\' into a RegExp. Error: ' + err.message);
+          return false;
         }
       }
-      return passCheck;
+      return true;
     } else {
       return msg.indexOf(phrase.toLowerCase()) !== -1;
     }
