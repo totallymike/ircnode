@@ -293,7 +293,7 @@ function initChans() {
     } else {
       irc.join(chan);
     }
-  }, waitTime);
+  }, irc.config.waitTime);
 
   var chan = irc.config.chan;
   if (chan instanceof Array) {
