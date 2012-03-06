@@ -604,28 +604,36 @@ if (process.env.IRC_NODE_ENABLE_KNOW !== 'false') {
   });
 
   irc.emitter.on('know', function (act) {
-    var output = 'Responses known to: ';
+    var output = [ 'Responses known to: ' ];
     for (var valuea2 in know_dict.action)
       if (know_dict.action[valuea2].hidden !== 'true')
-        output += '\'/me ' + parsePhrase(valuea2) + '\', ';
+        output[0] += '\'/me ' + parsePhrase(valuea2) + '\', ';
     for (var valuer2 in know_dict.regular)
       if (know_dict.regular[valuer2].hidden !== 'true')
-        output += '\'' + parsePhrase(valuer2) + '\', ';
-    if (output === 'Responses known to: ')
+        output[0] += '\'' + parsePhrase(valuer2) + '\', ';
+    if (output[0] === 'Responses known to: ')
       irc.privmsg(act.source, 'No known responses.');
     else {
-      output = output.substring(0, output.length - 2);
-      if (output.length > 400) {
-        var cuts = 0;
-        while (output.length > 390) {
-          var outArr = output.split(', ');
-          outArr.splice(outArr.length - 1, 1);
-          output = outArr.join(', ');
-          cuts++;
+      var loop = true;
+      while (loop) {
+        loop = false;
+        for (var i in output) {
+          if (output[i].length > 400) {
+            if (output[parseInt(i, 10) + 1] === undefined)
+              output[parseInt(i, 10) + 1] = '';
+            while (output[i].length > 397) {
+              var outArr = output[i].split(', ');
+              output[parseInt(i, 10) + 1] = outArr.splice(outArr.length - 1, 1) + ', ' + output[parseInt(i, 10) + 1];
+              output[i] = outArr.join(', ');
+            }
+            output[parseInt(i, 10) + 1] = '...' + output[parseInt(i, 10) + 1].slice(0, -2);
+            output[i] += '...';
+            loop = true;
+          }
         }
-        output += ' and ' + cuts + ' more';
       }
-      irc.privmsg(act.source, output);
+      for (var i2 = 0; i2 < output.length && i2 < 3; i2++)
+        irc.privmsg(act.source, output[i2]);
     }
   });
 }
