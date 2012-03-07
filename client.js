@@ -341,6 +341,7 @@ fs.readdir(plugin_dir, function (err, files) {
       plugin.enabled = true;
       irc.plugins.push(plugin);
       irc.emitter.on(plugin.name, plugin.handler);
+      console.log('1st log for plugins: ' + plugin.name)
     }
   }
 });
