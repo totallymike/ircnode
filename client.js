@@ -390,8 +390,9 @@ fs.readdir(plugin_dir, function (err, files) {
       var plugin = require(ppath);
       plugin.enabled = true;
       irc.plugins.push(plugin);
-      irc.emitter.on(plugin.name, plugin.handler);
-      console.log('1st log for plugins: ' + plugin.name)
+      for (var e in plugin.name) {
+        irc.emitter.on(plugin.name[e], plugin.handler[e]);
+      }
     }
   }
 });
@@ -400,10 +401,12 @@ irc.emitter.on('disable', function (act) {
   irc.check_level(act.nick, 'admin', function (is_admin) {
     if (is_admin) {
       for (var p in irc.plugins) {
-        if (irc.plugins[p].name === act.params[0]) {
-          irc.plugins[p].enabled = false;
-          irc.emitter.removeListener(irc.plugins[p].name, irc.plugins[p].handler);
-          irc.privmsg(act.source, act.params[0] + ' disabled');
+        for (var e in irc.plugins[p].name) {
+          if (irc.plugins[p].name[e] === act.params[0]) {
+            irc.plugins[p].enabled = false;
+            irc.emitter.removeListener(irc.plugins[p].name[e], irc.plugins[p].handler[e]);
+            irc.privmsg(act.source, act.params[0] + ' disabled');
+          }
         }
       }
     } else {
@@ -416,11 +419,13 @@ irc.emitter.on('enable', function (act) {
   irc.check_level(act.nick, 'admin', function (is_admin) {
     if (is_admin) {
       for (var p in irc.plugins) {
-        if (irc.plugins[p].name === act.params[0] &&
-            irc.plugins[p].enabled === false) {
-          irc.plugins[p].enabled = true;
-          irc.emitter.on(irc.plugins[p].name, irc.plugins[p].handler);
-          irc.privmsg(act.source, act.params[0] + ' enabled');
+        for (var e in irc.plugins[p].name) {
+          if (irc.plugins[p].name[e] === act.params[0] &&
+              irc.plugins[p].enabled === false) {
+            irc.plugins[p].enabled = true;
+            irc.emitter.on(irc.plugins[p].name[e], irc.plugins[p].handler[e]);
+            irc.privmsg(act.source, act.params[0] + ' enabled');
+          }
         }
       }
     } else {
@@ -481,7 +486,7 @@ irc.emitter.on('seen', function (act) {
   }
   var msg = irc.users[nick].seen_msg;
   if (msg.substring(0, 7) === '\u0001ACTION')
-      msg = '***' + nick + msg.substring(7, msg.length - 1);
+    msg = '***' + nick + msg.substring(7, msg.length - 1);
   irc.privmsg(act.source, nick + ' last seen: ' + irc.users[nick].seen_time +
               " saying '" + msg + "' in " + irc.users[nick].seen_channel);
 });
