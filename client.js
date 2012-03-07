@@ -5,10 +5,15 @@ var events    = require('events');
 var path      = require('path');
 
 var irc = module.exports = {};
+irc._socket = new net.Socket({'type': 'tcp4'});
+irc.send = function (content, callback) {
+  irc._socket.write(content, callback);
+};
 
 var config_path = (process.env.IRC_NODE_PATH ||
                    process.env[(process.platform === 'win32') ?
                    'USERPROFILE' : 'HOME'] + '/.ircnode');
+
 var config_file = config_path + '/config';
 var user_file   = config_path + '/users.json';
 var plugin_dir  = config_path + '/plugins/';
@@ -17,26 +22,30 @@ var lock_file   = '/tmp/ircnode.pid';
 
 irc.auth_levels = [ 'admin', 'owner' ];
 
-var exists = path.existsSync(config_path);
-if (!exists) {
-  fs.mkdirSync(config_path, '0755');
-  fs.mkdir(plugin_dir, '0755');
-}
-
-var review_required = false;
-[config_file, user_file].forEach(function (file) {
-  var exists = path.existsSync(file);
+// If started as main and config files don't exist,
+// make them.
+if (require.main === module) {
+  var exists = path.existsSync(config_path);
   if (!exists) {
-    var sample_file = './' + path.basename(file) + '.sample';
-    fs.openSync(file, 'w+');
-    fs.writeFileSync(file, fs.readFileSync(sample_file));
-    console.log('Creating a new ' + file + ' + file.');
-    review_required = true;
+    fs.mkdirSync(config_path, '0755');
+    fs.mkdir(plugin_dir, '0755');
   }
-});
-if (review_required) {
-  console.log('Please review the configuration files in ' + config_path);
-  process.exit();
+
+  var review_required = false;
+  [config_file, user_file].forEach(function (file) {
+    var exists = path.existsSync(file);
+    if (!exists) {
+      var sample_file = './' + path.basename(file) + '.sample';
+      fs.openSync(file, 'w+');
+      fs.writeFileSync(file, fs.readFileSync(sample_file));
+      console.log('Creating a new ' + file + ' + file.');
+      review_required = true;
+    }
+  });
+  if (review_required) {
+    console.log('Please review the configuration files in ' + config_path);
+    process.exit();
+  }
 }
 
 irc.userLoop = setInterval(function () {
@@ -196,8 +205,13 @@ irc.is_owner = function (nick, callback) {
   irc.check_level(nick, 'owner', callback);
 };
 
+
+irc._wrapMessage = function (target, msg) {
+  return 'PRIVMSG ' + target + ' :' + msg + '\r\n';
+};
+
 irc.privmsg  = function (target, msg) {
-  irc._socket.write('PRIVMSG ' + target + ' :' + msg + '\r\n');
+  irc.send(irc._wrapMessage(target, msg));
 };
 
 irc.splitcmd = function (data) {
@@ -224,17 +238,21 @@ irc.splitcmd = function (data) {
   return action;
 };
 
-irc.act = function (options, callback) {
+irc._wrapAction = function (options) {
   if (irc.debug) console.log(options);
-  var string = options.action + ' ';
+  var string = options.action;
   if (typeof options.params !== 'undefined') {
-    string += options.params.join(' ');
+    string += ' ' + options.params.join(' ');
   }
   if (typeof options.longParam !== 'undefined') {
     string += ' :' + options.longParam;
   }
   if (irc.debug) console.log(string);
-  irc._socket.write(string + '\r\n', callback);
+  return string + '\r\n';
+};
+
+irc.act = function act(options, callback) {
+  irc.send(irc._wrapAction(options), callback);
 };
 
 irc.join = function (channel, callback) {
@@ -258,45 +276,71 @@ irc.quit = function (msg, callback) {
   irc.act({action: 'QUIT', params: [msg]}, function () {
     if (path.existsSync(lock_file))
       fs.unlinkSync(lock_file);
+    if (irc.debug) console.log('Quitting . . .');
     callback();
     process.exit(0);
   });
 };
 
-irc._socket = net.connect(irc.config.port, irc.config.address, function () {
-  var nick      = irc.config.nick;
-  var user      = irc.config.user;
-  var realName  = irc.config.realName;
-  var chan      = irc.config.chan;
-  var waitTime  = irc.config.waitTime;
-
-  irc.nick(nick, function () {
-    irc.user(user, '8', realName, function () {
-      var has_admin = false;
-      for (var u in irc.users) {
-        if (typeof irc.users[u] !== 'undefined')
-          if (typeof irc.users[u].auth !== 'undefined')
-            if (irc.users[u].auth === 'admin' || irc.users[u].auth === 'owner')
-              has_admin = true;
+/* Sequential callbacks, pulled out for readability.
+ * The sequence is started in irc.connect */
+function initChans() {
+  setTimeout(function () {
+    if (chan instanceof Array) {
+      for (var i = 0, l = chan.length; i < l; i += 1) {
+        irc.join(chan[i]);
       }
-      if (!has_admin) {
-        throw ("An admin must be configured in users.json!");
-      }
-      
-      setTimeout(function () {
-        if (chan instanceof Array) {
-          for (var i = 0, l = chan.length; i < l; i += 1) {
-            irc.join(chan[i]);
-          }
-        } else {
-          irc.join(chan);
-        }
-      }, waitTime);
-    });
-  });
-});
+    } else {
+      irc.join(chan);
+    }
+  }, irc.config.waitTime);
 
-irc._socket.on('data', function (data) {
+  var chan = irc.config.chan;
+  if (chan instanceof Array) {
+    for (var i = 0, l = chan.length; i < l; i += 1) {
+      irc.join(chan[i]);
+    }
+  } else {
+    irc.join(chan);
+  }
+}
+
+function sendUser() {
+  var user = irc.config.user;
+  var realName = irc.config.realName;
+  irc.user(user, '8', realName, initChans);
+}
+
+function sendNick() {
+  var nick = irc.config.nick;
+  irc.nick(nick, sendUser);
+}
+/* End sequential callbacks */
+
+irc.connect = function connect(args) {
+  var has_admin = false;
+  for (var u in irc.users) {
+    if (typeof irc.users[u] !== 'undefined')
+      if (typeof irc.users[u].auth !== 'undefined')
+        if (irc.users[u].auth === 'admin' || irc.users[u].auth === 'owner')
+          has_admin = true;
+  }
+  if (!has_admin) {
+    throw ("An admin must be configured in users.json!");
+  }
+
+  // Allow programmatic overriding of config settings.
+  if (typeof args !== 'undefined') {
+    for (var i in args) {
+      irc.config[i] = args[i];
+    }
+  }
+
+  // Here begins the sequence ;)
+  irc._socket.connect(irc.config.port, irc.config.address, sendNick);
+};
+
+irc._socket.on('data', function onData(data) {
   data = data.toString();
 
   if (irc.debug) {
@@ -313,8 +357,14 @@ irc._socket.on('data', function (data) {
   }
 });
 
+irc._pongHandler = function pongHandler(data) {
+  // We only wrap pongs, write them to the socket for testing.
+  var address = data.slice(data.indexOf(':') + 1);
+  return irc._wrapAction({action: 'PONG', longParam: address});
+};
+
 irc.emitter.on('PING', function (data) {
-  irc._socket.write('PONG ' + data.slice(data.indexOf(':')) + '\r\n');
+  irc.send(irc._pongHandler(data));
 });
 
 irc.emitter.on('PRIVMSG', function (data) {
@@ -429,11 +479,17 @@ irc.emitter.on('seen', function (act) {
     irc.privmsg(act.source, 'Unknown nick: ' + nick);
     return (1);
   }
+  var msg = irc.users[nick].seen_msg;
+  if (msg.substring(0, 7) === '\u0001ACTION')
+      msg = '***' + nick + msg.substring(7, msg.length - 1);
   irc.privmsg(act.source, nick + ' last seen: ' + irc.users[nick].seen_time +
-              " saying '" + irc.users[nick].seen_msg + "' in " +
-              irc.users[nick].seen_channel);
+              " saying '" + msg + "' in " + irc.users[nick].seen_channel);
 });
 
 irc.emitter.on('version', function (act) {
   irc.privmsg(act.source, 'IRC Node ' + version);
 });
+
+if (require.main === module) {
+  irc.connect();
+}

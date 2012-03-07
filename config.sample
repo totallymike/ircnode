@@ -3,6 +3,7 @@
   "address":  "irc.freenode.net",
   "nick":     "ircnode_bot",
   "user":     "ircnode_bot",
+  "password": "",
   "chan":     "#bots",
   "realName": "Ircnode Bot",
   "waitTime": 3000,
