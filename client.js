@@ -24,29 +24,6 @@ irc.auth_levels = [ 'admin', 'owner' ];
 
 // If started as main and config files don't exist,
 // make them.
-if (require.main === module) {
-  var exists = path.existsSync(config_path);
-  if (!exists) {
-    fs.mkdirSync(config_path, '0755');
-    fs.mkdir(plugin_dir, '0755');
-  }
-
-  var review_required = false;
-  [config_file, user_file].forEach(function (file) {
-    var exists = path.existsSync(file);
-    if (!exists) {
-      var sample_file = './' + path.basename(file) + '.sample';
-      fs.openSync(file, 'w+');
-      fs.writeFileSync(file, fs.readFileSync(sample_file));
-      console.log('Creating a new ' + file + ' + file.');
-      review_required = true;
-    }
-  });
-  if (review_required) {
-    console.log('Please review the configuration files in ' + config_path);
-    process.exit();
-  }
-}
 
 irc.userLoop = setInterval(function () {
   fs.writeFile(user_file, JSON.stringify(irc.users, null, 2));
