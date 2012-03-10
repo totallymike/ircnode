@@ -6,6 +6,7 @@
       "url": "https://github.com/thatvalterguy"
     }
   ],
+  "preferGlobal": true,
   "name": "ircnode",
   "description": "Simple, extensible IRC bot",
   "version": "0.1.0",
