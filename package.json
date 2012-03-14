@@ -6,10 +6,11 @@
       "url": "https://github.com/thatvalterguy"
     }
   ],
+  "preferGlobal": true,
   "name": "ircnode",
   "description": "Simple, extensible IRC bot",
-  "version": "0.0.9",
-  "main"   : "client.js",
+  "version": "0.1.1",
+  "main"   : "./lib/ircnode.js",
   "homepage": "http://github.com/totallymike/ircnode",
   "repository": {
     "type": "git",
@@ -18,7 +19,8 @@
   "engines": {
     "node": ">=0.6.11"
   },
-  "bin": { "ircnode": "./client.js" },
+  "bin": { "ircnode": "./bin/app.js" },
+  "scripts": { "postinstall": "node ./util/install.js" },
   "dependencies": {},
   "devDependencies": {},
   "optionalDependencies": {
