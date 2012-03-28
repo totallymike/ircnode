@@ -2,7 +2,7 @@ var fs    = require('fs'),
     path  = require('path')
 
 var isGlobal = process.env.npm_config_global
-var configPath = path.resolve(process.env.HOME, '.ircnode')
+var configPath = path.resolve(process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'], '.ircnode')
 var configFile = path.resolve(configPath, 'config')
 var userFile   = path.resolve(configPath, 'users.json')
 var pluginDir  = path.resolve(configPath, 'plugins/')
