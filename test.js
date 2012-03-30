@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var irc = require('./client'),
+var irc = require('ircnode'),
     net = require('net'),
     assert = require('assert');
 
@@ -16,15 +16,15 @@ var splitTests = {
     'params':  ['action'],
     'data': 'mike!michael@localhost PRIVMSG #test :!test action'
   },
-  'mike!michael@localhost PRIVMSG tm_test :!test action': { // test PM
+  'mike!michael@localhost PRIVMSG tm_test_nick_12345 :!test action': { // test PM
     'nick': 'mike',
     'source': 'mike',
     'user': 'michael',
     'host': 'localhost',
-    'channel': 'tm_test',
+    'channel': 'tm_test_nick_12345',
     'cmd': 'test',
     'params':  ['action'],
-    'data': 'mike!michael@localhost PRIVMSG tm_test :!test action'
+    'data': 'mike!michael@localhost PRIVMSG tm_test_nick_12345 :!test action'
   }
 };
 
