@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var irc = require(__dirname + '/lib/ircnode.js'),
+var irc = require('ircnode'),
     net = require('net'),
     assert = require('assert');
 
@@ -31,8 +31,8 @@ var splitTests = {
 for (var u in splitTests) {
   var actual = irc.splitcmd(u);
   var expected = splitTests[u];
+
   assert.deepEqual(actual, expected);
 }
 
 process.exit(0);
-
