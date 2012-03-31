@@ -12,6 +12,7 @@
   "version": "0.1.1",
   "main"   : "./lib/ircnode.js",
   "homepage": "http://github.com/totallymike/ircnode",
+  "bugs": { "url" : "http://github.com/totallymike/ircnode/issues" },
   "repository": {
     "type": "git",
     "url": "git://github.com/totallymike/ircnode.git"
@@ -20,7 +21,10 @@
     "node": ">=0.6.11"
   },
   "bin": { "ircnode": "./bin/app.js" },
-  "scripts": { "postinstall": "node ./util/install.js" },
+  "scripts": {
+    "postinstall": "node ./util/install.js",
+    "test": "node ./test.js"
+  },
   "dependencies": {},
   "devDependencies": {},
   "optionalDependencies": {
