@@ -5,6 +5,7 @@ var isGlobal = process.env.npm_config_global
 var configPath = path.resolve(process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'], '.ircnode')
 var configFile = path.resolve(configPath, 'config')
 var userFile   = path.resolve(configPath, 'users.json')
+var hostFile   = path.resolve(configPath, 'hosts.json');
 var pluginDir  = path.resolve(configPath, 'plugins/')
 
 var exists = path.existsSync(configPath)
@@ -14,7 +15,7 @@ if (!exists) {
 }
 
 var review_required = false
-;[configFile, userFile].forEach(function (file) {
+;[configFile, userFile, hostFile].forEach(function (file) {
   var exists = path.existsSync(file)
   if (!exists) {
     var sample_file = './' + path.basename(file) + '.sample'
