@@ -1,5 +1,3 @@
 {
-  "unaffiliated/ircnode_owner": {
-    "auth": "owner"
-  }
+  "unaffiliated/ircnode_owner": "owner"
 }
