@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 var fs        = require('fs'),
-    path      = require('path');
+    path      = require('path'),
+    irc       = require('ircnode');
 
 var config_path = (process.env.IRC_NODE_PATH || process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME'] + '/.ircnode');
 var log_file    = config_path + '/bot.log';
@@ -73,5 +74,4 @@ case "stop":
   break;
 }
 
-var irc = require('ircnode');
 irc.connect();
