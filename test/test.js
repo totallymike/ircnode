@@ -6,6 +6,10 @@ var irc = require('../lib/ircnode'),
     net = require('net'),
     assert = require('assert');
 
+setTimeout(function() {
+  process.exit(0);
+}, 5000);
+
 var testServer = net.createServer(function testIrcNode(c) {
   console.log('Connection received');
   c.once('data', function(data) {
@@ -33,7 +37,7 @@ assert.throws(function() {
    * Must have the phrase 'admin' somewher to pass.
    */
   irc.users.ircnode_owner.auth = null;
-  irc.connect(3313);
+  irc.connect();
 }, /admin/);
 irc.users.ircnode_owner.auth = 'owner'; // Fix it.
 
