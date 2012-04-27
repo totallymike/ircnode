@@ -9,7 +9,7 @@
   "preferGlobal": true,
   "name": "ircnode",
   "description": "Simple, extensible IRC bot",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "main"   : "./lib/ircnode.js",
   "homepage": "http://github.com/totallymike/ircnode",
   "bugs": { "url" : "http://github.com/totallymike/ircnode/issues" },
@@ -23,7 +23,7 @@
   "bin": { "ircnode": "./bin/app.js" },
   "scripts": {
     "postinstall": "node ./util/install.js",
-    "test": "node ./test.js"
+    "test": "node ./test/test.js"
   },
   "dependencies": {},
   "devDependencies": {},

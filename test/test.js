@@ -1,9 +1,14 @@
 #!/usr/bin/env node
-var irc = require('ircnode'),
+var irc = require('../lib/ircnode'),
     net = require('net'),
-    assert = require('assert');
+    assert = require('assert'),
+    testServer = net.createServer();
+
+testServer.listen(3313);
+
 
 assert.equal(irc._pongHandler('PING :burgle'), 'PONG :burgle\r\n');
+process.env.IRC_NODE_PATH = './';
 
 var splitTests = {
   'mike!michael@localhost PRIVMSG #test :!test action': { // normal messages
