@@ -8,7 +8,7 @@ var irc = require('../lib/ircnode'),
 
 setTimeout(function() {
   process.exit(0);
-}, 5000);
+}, 8000);
 
 var testServer = net.createServer(function testIrcNode(c) {
   console.log('Connection received');
@@ -16,12 +16,17 @@ var testServer = net.createServer(function testIrcNode(c) {
     assert.equal(data.toString(),
       'NICK ' + irc.config.nick + '\r\n' +
         'USER ' + irc.config.user + ' 8 * :' + irc.config.realName + '\r\n');
+      console.log("Nick/User test passed.");
+
     c.once('data', function(data) {
       assert.equal(data.toString(), 'JOIN #bots\r\n');
+      console.log("Join test passed.");
+
       c.once('data', function (data) {
         assert.equal(data.toString(), 'PONG :burgle\r\n');
-        c.write('PING :burgle\r\n');
+        console.log("PONG test passed.");
       });
+      c.write('PING :burgle\r\n');
     });
   });
 
