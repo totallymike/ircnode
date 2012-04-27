@@ -4,22 +4,28 @@ process.env.IRC_NODE_PATH = './';
 
 var irc = require('../lib/ircnode'),
     net = require('net'),
-    assert = require('assert'),
-    testServer = net.createServer();
+    assert = require('assert');
 
-function testIrcNode(c) {
+var testServer = net.createServer(function testIrcNode(c) {
   console.log('Connection received');
   c.once('data', function(data) {
-    assert.equal(data.toString(), 'PONG :burgle\r\n');
+    assert.equal(data.toString(),
+      'NICK ' + irc.config.nick + '\r\n' +
+        'USER ' + irc.config.user + ' 8 * :' + irc.config.realName + '\r\n' +
+        'JOIN ' + irc.config.chan + '\r\n');
+    c.once('data', function(data) {
+      assert.equal(data.toString(), 'PONG :burgle\r\n');
+    });
+    c.write('PING :burgle\r\n');
   });
-  c.write('PING :burgle\r\n');
-}
 
-testServer.listen(3313, testIrcNode);
+});
+
+testServer.listen(22121);
 
 
-irc.config.port = 3313;
-irc.config.address = 'localhost';
+irc.config.port = 22121;
+irc.config.address = '127.0.0.1';
 
 assert.throws(function() {
   /* Break the default irc owner.
@@ -32,8 +38,6 @@ assert.throws(function() {
 irc.users.ircnode_owner.auth = 'owner'; // Fix it.
 
 irc.connect();
-
-testServer.close();
 
 var splitTests = {
   'mike!michael@localhost PRIVMSG #test :!test action': { // normal messages
@@ -64,5 +68,4 @@ for (var u in splitTests) {
 
   assert.deepEqual(actual, expected);
 }
-
 
