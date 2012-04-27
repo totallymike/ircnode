@@ -17,6 +17,10 @@ function testIrcNode(c) {
 
 testServer.listen(3313, testIrcNode);
 
+
+irc.config.port = 3313;
+irc.config.address = 'localhost';
+
 assert.throws(function() {
   /* Break the default irc owner.
    * Check for error thrown on connect.
@@ -25,11 +29,11 @@ assert.throws(function() {
   irc.users.ircnode_owner.auth = null;
   irc.connect(3313);
 }, /admin/);
-
 irc.users.ircnode_owner.auth = 'owner'; // Fix it.
-irc.config.port = 3313;
-irc.config.address = 'localhost';
-irc.connect(3313, function() {console.log('Connected');});
+
+irc.connect();
+
+testServer.close();
 
 var splitTests = {
   'mike!michael@localhost PRIVMSG #test :!test action': { // normal messages
@@ -61,4 +65,4 @@ for (var u in splitTests) {
   assert.deepEqual(actual, expected);
 }
 
-process.exit(0);
+
