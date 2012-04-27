@@ -15,12 +15,14 @@ var testServer = net.createServer(function testIrcNode(c) {
   c.once('data', function(data) {
     assert.equal(data.toString(),
       'NICK ' + irc.config.nick + '\r\n' +
-        'USER ' + irc.config.user + ' 8 * :' + irc.config.realName + '\r\n' +
-        'JOIN ' + irc.config.chan + '\r\n');
+        'USER ' + irc.config.user + ' 8 * :' + irc.config.realName + '\r\n');
     c.once('data', function(data) {
-      assert.equal(data.toString(), 'PONG :burgle\r\n');
+      assert.equal(data.toString(), 'JOIN #bots\r\n');
+      c.once('data', function (data) {
+        assert.equal(data.toString(), 'PONG :burgle\r\n');
+        c.write('PING :burgle\r\n');
+      });
     });
-    c.write('PING :burgle\r\n');
   });
 
 });
