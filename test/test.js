@@ -1,14 +1,35 @@
 #!/usr/bin/env node
+
+process.env.IRC_NODE_PATH = './';
+
 var irc = require('../lib/ircnode'),
     net = require('net'),
     assert = require('assert'),
     testServer = net.createServer();
 
-testServer.listen(3313);
+function testIrcNode(c) {
+  console.log('Connection received');
+  c.once('data', function(data) {
+    assert.equal(data.toString(), 'PONG :burgle\r\n');
+  });
+  c.write('PING :burgle\r\n');
+}
 
+testServer.listen(3313, testIrcNode);
 
-assert.equal(irc._pongHandler('PING :burgle'), 'PONG :burgle\r\n');
-process.env.IRC_NODE_PATH = './';
+assert.throws(function() {
+  /* Break the default irc owner.
+   * Check for error thrown on connect.
+   * Must have the phrase 'admin' somewher to pass.
+   */
+  irc.users.ircnode_owner.auth = null;
+  irc.connect(3313);
+}, /admin/);
+
+irc.users.ircnode_owner.auth = 'owner'; // Fix it.
+irc.config.port = 3313;
+irc.config.address = 'localhost';
+irc.connect(3313, function() {console.log('Connected');});
 
 var splitTests = {
   'mike!michael@localhost PRIVMSG #test :!test action': { // normal messages
