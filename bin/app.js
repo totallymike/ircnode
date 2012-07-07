@@ -12,7 +12,7 @@ var dPID;
 
 switch (args[2]) {
 case "start":
-  if (path.existsSync(lock_file)) {
+  if (fs.existsSync(lock_file)) {
     console.log('IRC Node seems to be already running on this system!');
     console.log('If this is not true, please delete the ' + lock_file);
     process.exit(0);
@@ -38,7 +38,7 @@ case "start":
   break;
 
 case "restart":
-  if (!path.existsSync(lock_file)) {
+  if (!fs.existsSync(lock_file)) {
     console.log('IRC Node was not running before on this system!');
   } else {
     process.kill(parseInt(fs.readFileSync(lock_file), 10));
@@ -64,7 +64,7 @@ case "restart":
   break;
 
 case "stop":
-  if (!path.existsSync(lock_file)) {
+  if (!fs.existsSync(lock_file)) {
     console.log('IRC Node does not seem to be running on this system!');
   } else {
     process.kill(parseInt(fs.readFileSync(lock_file), 10));
