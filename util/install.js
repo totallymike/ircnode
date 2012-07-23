@@ -8,7 +8,7 @@ var userFile   = path.resolve(configPath, 'users.json')
 var hostFile   = path.resolve(configPath, 'hosts.json');
 var pluginDir  = path.resolve(configPath, 'plugins/')
 
-var exists = path.existsSync(configPath)
+var exists = fs.existsSync(configPath)
 if (!exists) {
   fs.mkdirSync(configPath, '0755')
   fs.mkdir(pluginDir, '0755')
@@ -16,7 +16,7 @@ if (!exists) {
 
 var review_required = false
 ;[configFile, userFile, hostFile].forEach(function (file) {
-  var exists = path.existsSync(file)
+  var exists = fs.existsSync(file)
   if (!exists) {
     var sample_file = './' + path.basename(file)
     fs.writeFileSync(file, fs.readFileSync(sample_file))
@@ -29,7 +29,7 @@ if (review_required)
 
 ;['sample', 'exec'].forEach(function (plugin) {
   var pluginPath = path.resolve(pluginDir, plugin + '.js')
-  var exists = path.existsSync(pluginPath)
+  var exists = fs.existsSync(pluginPath)
   if (!exists) {
     var file = path.resolve('plugins', path.basename(pluginPath))
     fs.writeFileSync(pluginPath, fs.readFileSync(file))
