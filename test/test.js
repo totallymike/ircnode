@@ -51,7 +51,17 @@ irc.users.ircnode_owner.auth = 'owner'; // Fix it.
 irc.connect();
 
 var splitTests = {
-  'mike!michael@localhost PRIVMSG #test :!test action': { // normal messages
+  'mike!michael@localhost PRIVMSG #test :!test': { // normal messages with no parameters
+    'nick': 'mike',
+    'source': '#test',
+    'user': 'michael',
+    'host': 'localhost',
+    'channel': '#test',
+    'cmd': 'test',
+    'params':  [],
+    'data': 'mike!michael@localhost PRIVMSG #test :!test'
+  },
+  'mike!michael@localhost PRIVMSG #test :!test action': { // normal messages with a parameter
     'nick': 'mike',
     'source': '#test',
     'user': 'michael',
