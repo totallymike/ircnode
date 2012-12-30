@@ -27,11 +27,13 @@ var review_required = false
 if (review_required)
   console.log('Please review the configuration files in ' + configPath)
 
-;['sample', 'exec'].forEach(function (plugin) {
-  var pluginPath = path.resolve(pluginDir, plugin + '.js')
-  var exists = fs.existsSync(pluginPath)
-  if (!exists) {
-    var file = path.resolve('plugins', path.basename(pluginPath))
-    fs.writeFileSync(pluginPath, fs.readFileSync(file))
+fs.readdirSync('plugins').forEach(function (plugin) {
+  if (plugin.substr(-3) === '.js') {
+    var pluginPath = path.resolve(pluginDir, plugin)
+    var exists = fs.existsSync(pluginPath)
+    if (!exists) {
+      var file = path.resolve('plugins', path.basename(pluginPath))
+      fs.writeFileSync(pluginPath, fs.readFileSync(file))
+    }
   }
 })
