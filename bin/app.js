@@ -13,28 +13,35 @@ var dPID;
 switch (args[2]) {
 case "start":
   if (fs.existsSync(lock_file)) {
-    console.log('IRC Node seems to be already running on this system!');
-    console.log('If this is not true, please delete the ' + lock_file);
-    process.exit(0);
-  } else {
     try {
-      var daemon = require('daemon');
+      process.kill(parseInt(fs.readFileSync(lock_file), 10), 'SIGCONT');
     } catch (err) {
-      if (process.platform === 'win32') {
-        console.log('There is no daemon support for Windows.');
-      } else {
-        console.log('You do not have daemon.node available. Please');
-        console.log('run \'npm install daemon\' to install it to the');
-        console.log('working directory.');
-      }
-      console.log('You can still launch the bot without daemon');
-      console.log('by simply launching it without any arguments.');
-      process.exit(0);
-      break;
+      if (err.code !== 'ESRCH') throw err;
+      fs.unlinkSync(lock_file);
+      console.log('PID file removed as IRC Node appears not to be running.');
     }
-    dPID = daemon.start(fs.openSync(log_file, 'a+'));
-    daemon.lock(lock_file);
+    if (fs.existsSync(lock_file)) {
+      console.log('IRC Node seems to be already running on this system!');
+      process.exit(0);
+    }
   }
+  try {
+    var daemon = require('daemon');
+  } catch (err) {
+    if (process.platform === 'win32') {
+      console.log('There is no daemon support for Windows.');
+    } else {
+      console.log('You do not have daemon.node available. Please');
+      console.log('run \'npm install daemon\' to install it to the');
+      console.log('working directory.');
+    }
+    console.log('You can still launch the bot without daemon');
+    console.log('by simply launching it without any arguments.');
+    process.exit(0);
+    break;
+  }
+  dPID = daemon.start(fs.openSync(log_file, 'a+'));
+  daemon.lock(lock_file);
   break;
 
 case "restart":
